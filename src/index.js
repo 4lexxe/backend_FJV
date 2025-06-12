@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require('cors');
-const { sequelize, connectDB } = require('./database');
+require('dotenv').config();
+
+const { sequelize, connectDB } = require('./config/database');
 
 // Importa tus modelos para que Sequelize los conozca
-require('./models/Rol');     // Asegúrate de que este esté
-require('./models/Usuario'); // ¡NUEVO!
+require('./models/Rol');
+require('./models/Usuario');
 
 var app = express();
 

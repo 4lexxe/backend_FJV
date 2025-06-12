@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../database');
+const { sequelize } = require('../config/database');
 const Rol = require('./Rol'); // Importamos el modelo Rol para la relación
 const bcrypt = require('bcryptjs'); // Necesario para hashear contraseñas
 
@@ -10,11 +10,15 @@ const Usuario = sequelize.define('Usuario', {
         autoIncrement: true
     },
     nombre: {
-        type: DataTypes.STRING(100),
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    apellido: {
+        type: DataTypes.STRING,
         allowNull: false
     },
     email: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
         unique: true,
         validate: {
@@ -22,10 +26,9 @@ const Usuario = sequelize.define('Usuario', {
         }
     },
     password: {
-        type: DataTypes.STRING(255), // Aquí almacenaremos el hash de la contraseña
+        type: DataTypes.STRING, // Aquí almacenaremos el hash de la contraseña
         allowNull: false
     }
-    // rolId se creará automáticamente por la relación
 }, {
     tableName: 'usuarios', // Nombre de la tabla en la base de datos
     timestamps: true,

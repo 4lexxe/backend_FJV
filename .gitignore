@@ -1,5 +1,7 @@
 # Directorios de Node.js
 node_modules/
+.history
+.vscode
 dist/ # Si usas TypeScript o Babel y compilas tu código
 build/ # Otro nombre común para directorios de compilación
 
