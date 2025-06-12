@@ -22,10 +22,9 @@ app.use(cors({ origin: 'http://localhost:4200' }));
 app.set('port', process.env.PORT || 3000);
 
 // Cargamos el modulo de direccionamiento de rutas
-// Cuando tengas tus modelos y rutas definidos, los importarás aquí
-// Por ejemplo:
 app.use('/api/usuario', require('./routes/usuario.routes'));
 app.use('/api/rol', require('./routes/rol.routes'));
+app.use('/api/auth', require('./routes/auth.routes'));
 
 // Iniciar el servidor
 async function startServer() {
