@@ -26,6 +26,7 @@ app.set('port', process.env.PORT || 3000);
 // Por ejemplo:
 app.use('/api/usuario', require('./routes/usuario.routes'));
 app.use('/api/rol', require('./routes/rol.routes'));
+app.use('/api/persona', require('./routes/persona.routes'));
 
 // Iniciar el servidor
 async function startServer() {
