@@ -50,18 +50,6 @@ const Usuario = sequelize.define('Usuario', {
     }
 });
 
-// Definición de la relación: Un Usuario pertenece a un Rol
-Usuario.belongsTo(Rol, {
-    foreignKey: 'rolId', // Clave foránea en la tabla 'usuarios'
-    as: 'rol' // Alias para acceder al rol desde el usuario (ej: usuario.rol)
-});
-
-// Definición de la relación inversa: Un Rol puede tener muchos Usuarios
-Rol.hasMany(Usuario, {
-    foreignKey: 'rolId', // Clave foránea en la tabla 'usuarios'
-    as: 'usuarios' // Alias para acceder a los usuarios desde el rol (ej: rol.usuarios)
-});
-
 // Método para comparar contraseñas (útil para el login)
 Usuario.prototype.comparePassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
