@@ -3,11 +3,13 @@
  */
 
 const jwt = require('jsonwebtoken');
+const { generateToken } = require('../utils/token');
 
 const linkedinAuthController = {};
 
 /**
  * Middleware para manejar el resultado de la autenticación con LinkedIn
+ * Genera un token JWT y redirecciona al frontend con los datos
  */
 linkedinAuthController.handleLinkedInCallback = (req, res) => {
     try {
@@ -16,63 +18,52 @@ linkedinAuthController.handleLinkedInCallback = (req, res) => {
         
         if (!user) {
             console.error('No hay usuario autenticado en la solicitud');
-            return res.status(401).json({
-                success: false,
-                message: "Usuario no encontrado"
-            });
+            return redirectToFrontendWithError(res, 'Autenticación fallida. Usuario no encontrado.');
         }
         
-        // Generar token JWT y preparar respuesta
+        // Generar token JWT
         const token = generateToken(user);
-        const userResponse = prepareUserResponse(user);
         
-        // MODIFICADO: No redirigir al frontend, siempre devolver JSON
-        console.log('Autenticación exitosa con LinkedIn para:', user.email);
-        return res.status(200).json({
-            success: true,
-            message: "Autenticación con LinkedIn exitosa",
-            usuario: userResponse,
-            token: token
-        });
+        // Preparar respuesta sin datos sensibles
+        const userResponse = {
+            id: user.id,
+            nombre: user.nombre,
+            apellido: user.apellido,
+            email: user.email,
+            rolId: user.rolId,
+            fotoPerfil: user.fotoPerfil,
+            emailVerificado: user.emailVerificado,
+            providerType: user.providerType
+        };
+        
+        // Redireccionar al frontend con token y datos de usuario
+        const frontendCallbackUrl = process.env.FRONTEND_CALLBACK_URL || 'http://localhost:4200/auth/callback';
+        
+        // Construir URL con parámetros (token y datos de usuario)
+        const redirectUrl = new URL(frontendCallbackUrl);
+        redirectUrl.searchParams.append('token', token);
+        redirectUrl.searchParams.append('userData', encodeURIComponent(JSON.stringify(userResponse)));
+        redirectUrl.searchParams.append('success', 'true');
+        
+        console.log('Redireccionando a frontend después de autenticación con LinkedIn exitosa:', user.email);
+        return res.redirect(redirectUrl.toString());
+        
     } catch (error) {
         console.error("Error en callback de LinkedIn:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Error interno del servidor",
-            error: error.message
-        });
+        return redirectToFrontendWithError(res, 'Error en el servidor durante la autenticación con LinkedIn.');
     }
 };
 
 /**
- * Genera un token JWT para el usuario autenticado
+ * Redirecciona al frontend con un mensaje de error
  */
-function generateToken(user) {
-    return jwt.sign(
-        {
-            id: user.id,
-            email: user.email,
-            rolId: user.rolId
-        },
-        process.env.JWT_SECRET || 'tu_clave_secreta_jwt',
-        { expiresIn: '24h' }
-    );
-}
-
-/**
- * Prepara los datos del usuario para la respuesta, excluyendo datos sensibles
- */
-function prepareUserResponse(user) {
-    return {
-        id: user.id,
-        nombre: user.nombre,
-        apellido: user.apellido,
-        email: user.email,
-        rolId: user.rolId,
-        fotoPerfil: user.fotoPerfil,
-        emailVerificado: user.emailVerificado,
-        providerType: user.providerType
-    };
+function redirectToFrontendWithError(res, errorMessage) {
+    const frontendCallbackUrl = process.env.FRONTEND_CALLBACK_URL || 'http://localhost:4200/auth/callback';
+    const redirectUrl = new URL(frontendCallbackUrl);
+    redirectUrl.searchParams.append('success', 'false');
+    redirectUrl.searchParams.append('error', errorMessage);
+    
+    return res.redirect(redirectUrl.toString());
 }
 
 module.exports = linkedinAuthController;

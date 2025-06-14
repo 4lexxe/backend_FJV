@@ -4,29 +4,13 @@
  */
 
 const jwt = require('jsonwebtoken');
+const { generateToken } = require('../utils/token');
 
 const googleAuthController = {};
 
 /**
- * Genera un token JWT para el usuario autenticado
- * @param {Object} user - Usuario autenticado
- * @returns {String} Token JWT
- */
-const generateToken = (user) => {
-    return jwt.sign(
-        {
-            id: user.id,
-            email: user.email,
-            rolId: user.rolId
-        },
-        process.env.JWT_SECRET || 'tu_clave_secreta_jwt',
-        { expiresIn: '24h' }
-    );
-};
-
-/**
  * Middleware para manejar el resultado de la autenticación con Google
- * Genera un token JWT y responde con información del usuario
+ * Genera un token JWT y redirecciona al frontend con los datos
  */
 googleAuthController.handleGoogleCallback = (req, res) => {
     try {
@@ -34,10 +18,7 @@ googleAuthController.handleGoogleCallback = (req, res) => {
         const user = req.user;
         
         if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: "Autenticación fallida. Usuario no encontrado."
-            });
+            return redirectToFrontendWithError(res, 'Autenticación fallida. Usuario no encontrado.');
         }
         
         // Generar token JWT
@@ -55,21 +36,34 @@ googleAuthController.handleGoogleCallback = (req, res) => {
             providerType: user.providerType
         };
         
-        // Responder con datos de usuario y token
-        return res.status(200).json({
-            success: true,
-            message: "Autenticación con Google exitosa",
-            usuario: userResponse,
-            token: token
-        });
+        // Redireccionar al frontend con token y datos de usuario
+        const frontendCallbackUrl = process.env.FRONTEND_CALLBACK_URL || 'http://localhost:4200/auth/callback';
+        
+        // Construir URL con parámetros (token y datos de usuario)
+        const redirectUrl = new URL(frontendCallbackUrl);
+        redirectUrl.searchParams.append('token', token);
+        redirectUrl.searchParams.append('userData', encodeURIComponent(JSON.stringify(userResponse)));
+        redirectUrl.searchParams.append('success', 'true');
+        
+        console.log('Redireccionando a frontend después de autenticación con Google exitosa:', user.email);
+        return res.redirect(redirectUrl.toString());
+        
     } catch (error) {
         console.error("Error en callback de Google:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Error interno del servidor",
-            error: error.message
-        });
+        return redirectToFrontendWithError(res, 'Error en el servidor durante la autenticación.');
     }
 };
+
+/**
+ * Redirecciona al frontend con un mensaje de error
+ */
+function redirectToFrontendWithError(res, errorMessage) {
+    const frontendCallbackUrl = process.env.FRONTEND_CALLBACK_URL || 'http://localhost:4200/auth/callback';
+    const redirectUrl = new URL(frontendCallbackUrl);
+    redirectUrl.searchParams.append('success', 'false');
+    redirectUrl.searchParams.append('error', errorMessage);
+    
+    return res.redirect(redirectUrl.toString());
+}
 
 module.exports = googleAuthController;

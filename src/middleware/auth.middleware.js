@@ -79,12 +79,9 @@ const authorize = (roles) => {
         
         // Verificar si el rol del usuario está en la lista de roles permitidos
         if (roles.length && !roles.includes(req.user.rol?.nombre)) {
-            console.log(`Acceso denegado: Usuario ${req.user.email} con rol ${req.user.rol?.nombre} intentó acceder a un recurso que requiere [${roles.join(', ')}]`);
             return res.status(403).json({
                 success: false,
-                message: 'Acceso denegado. No tienes permisos suficientes para realizar esta acción',
-                requiredRoles: roles,
-                currentRole: req.user.rol?.nombre
+                message: 'No tiene permisos para acceder a este recurso'
             });
         }
         

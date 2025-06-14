@@ -1,8 +1,8 @@
 /**
  * Script para inicializar un usuario regular en la base de datos
  * 
- * Este script crea un usuario con rol "usuario" (id=2) si no existe
- * ningún usuario con ese rol
+ * Este script crea un usuario con rol "usuario" (id=2) solicitando
+ * los datos a través de la línea de comandos
  */
 
 require('dotenv').config({ path: '../.env' });
@@ -10,17 +10,25 @@ const { sequelize, connectDB } = require('../config/database');
 const Usuario = require('../models/Usuario');
 const Rol = require('../models/Rol');
 const defineAssociations = require('../models/associations');
+const readline = require('readline');
 
-// Datos del usuario regular por defecto
-const DEFAULT_USER = {
-    nombre: 'Usuario',
-    apellido: 'Regular',
-    email: 'usuario@sistema.com',
-    password: 'Usuario123!'
-};
+// Crear interfaz para leer entrada del usuario
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+// Función para preguntar datos al usuario
+function pregunta(pregunta) {
+    return new Promise((resolve) => {
+        rl.question(pregunta, (respuesta) => {
+            resolve(respuesta.trim());
+        });
+    });
+}
 
 /**
- * Inicializa un usuario regular si no existe
+ * Inicializa un usuario regular solicitando datos por consola
  */
 async function initRegularUser() {
     try {
@@ -46,34 +54,60 @@ async function initRegularUser() {
             console.log('Rol de usuario encontrado con ID:', userRol.id);
         }
         
-        // Verificar si existe algún usuario con rol de usuario
-        const userExists = await Usuario.findOne({
-            where: { rolId: userRol.id }
-        });
+        // Solicitar datos del usuario
+        console.log('\n=== CREACIÓN DE NUEVO USUARIO REGULAR ===');
+        const nombre = await pregunta('Ingrese nombre: ');
+        const apellido = await pregunta('Ingrese apellido: ');
+        const email = await pregunta('Ingrese email: ');
         
-        if (userExists) {
-            console.log('Ya existe un usuario regular:', userExists.email);
+        // Verificar que el email no exista
+        const emailExiste = await Usuario.findOne({ where: { email } });
+        if (emailExiste) {
+            console.error(`❌ Error: Ya existe un usuario con el email '${email}'`);
+            rl.close();
+            await sequelize.close();
             return;
         }
         
+        // Solicitar contraseña con confirmación
+        let password = '';
+        let confirmPassword = '';
+        do {
+            password = await pregunta('Ingrese contraseña: ');
+            confirmPassword = await pregunta('Confirme contraseña: ');
+            
+            if (password !== confirmPassword) {
+                console.log('Las contraseñas no coinciden. Intente nuevamente.');
+            }
+            
+            if (password.length < 6) {
+                console.log('La contraseña debe tener al menos 6 caracteres. Intente nuevamente.');
+                password = '';
+            }
+            
+        } while (password !== confirmPassword || password.length < 6);
+        
         // Crear usuario regular
-        console.log('Creando usuario regular por defecto...');
+        console.log('\nCreando usuario regular...');
         const regularUser = await Usuario.create({
-            nombre: DEFAULT_USER.nombre,
-            apellido: DEFAULT_USER.apellido,
-            email: DEFAULT_USER.email,
-            password: DEFAULT_USER.password,
+            nombre,
+            apellido,
+            email,
+            password,
             rolId: userRol.id,
             emailVerificado: true
         });
         
-        console.log('✅ Usuario regular creado exitosamente:');
+        console.log('\n✅ Usuario regular creado exitosamente:');
         console.log(`   - Nombre: ${regularUser.nombre} ${regularUser.apellido}`);
         console.log(`   - Email: ${regularUser.email}`);
-        console.log(`   - Contraseña: ${DEFAULT_USER.password}`);
+        
+        // Cerrar la interfaz de readline
+        rl.close();
         
     } catch (error) {
-        console.error('❌ Error al inicializar usuario regular:', error);
+        console.error('\n❌ Error al inicializar usuario regular:', error);
+        rl.close();
     } finally {
         // Cerrar conexión
         await sequelize.close();

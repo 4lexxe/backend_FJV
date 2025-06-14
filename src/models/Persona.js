@@ -37,6 +37,7 @@ const Persona = sequelize.define('Persona', {
         type: DataTypes.STRING(50), 
         allowNull: true 
     },
+    
     paseClub: { 
         type: DataTypes.STRING(255), 
         allowNull: true 

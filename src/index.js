@@ -14,6 +14,7 @@ require('dotenv').config();
 const { sequelize, connectDB } = require('./config/database');
 const passport = require('./config/passport');
 const defineAssociations = require('./models/associations');
+const corsOptions = require('./config/cors');
 
 // --- Inicialización de Express ---
 const app = express();
@@ -23,11 +24,8 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// CORS
-app.use(cors({ 
-    origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
-    credentials: true
-}));
+// CORS - Usar la configuración centralizada
+app.use(cors(corsOptions));
 
 // Sesiones para autenticación
 app.use(session({

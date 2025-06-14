@@ -22,18 +22,23 @@ const handleSocialAuthCallback = (strategyName, errorRedirect) => {
                 const errorMsg = err?.message || 'Error de autenticación';
                 console.error(`Error en autenticación ${strategyName}:`, errorMsg);
                 
-                // Simplificar el mensaje de error
-                if (errorMsg.includes('no registrado') || errorMsg.includes('no encontrado') || errorMsg.includes('no existe')) {
-                    return res.redirect(`${errorRedirect}?error=${encodeURIComponent('Usuario no encontrado')}`);
-                }
+                const frontendCallbackUrl = process.env.FRONTEND_CALLBACK_URL || 'http://localhost:4200/auth/callback';
+                const redirectUrl = new URL(frontendCallbackUrl);
+                redirectUrl.searchParams.append('success', 'false');
+                redirectUrl.searchParams.append('error', errorMsg);
                 
-                return res.redirect(`${errorRedirect}?error=${encodeURIComponent(errorMsg)}`);
+                return res.redirect(redirectUrl.toString());
             }
             
             req.logIn(user, (loginErr) => {
                 if (loginErr) {
                     console.error(`Error al guardar sesión ${strategyName}:`, loginErr);
-                    return res.redirect(`${errorRedirect}?error=${encodeURIComponent(loginErr.message)}`);
+                    const frontendCallbackUrl = process.env.FRONTEND_CALLBACK_URL || 'http://localhost:4200/auth/callback';
+                    const redirectUrl = new URL(frontendCallbackUrl);
+                    redirectUrl.searchParams.append('success', 'false');
+                    redirectUrl.searchParams.append('error', loginErr.message);
+                    
+                    return res.redirect(redirectUrl.toString());
                 }
                 console.log(`Usuario autenticado exitosamente con ${strategyName}: ${user.email}`);
                 next();
@@ -51,6 +56,9 @@ router.post('/login', authCtrl.login);
 
 // Validar token JWT
 router.get('/validate-token', authenticate, authCtrl.validateToken);
+
+// Añadir ruta para verificar token sin devolver datos de usuario
+router.get('/check-token', authenticate, authCtrl.checkToken);
 
 // Ruta protegida de ejemplo - solo accesible por administradores
 router.get('/admin-only', authenticate, authorize('admin'), (req, res) => {
@@ -89,7 +97,7 @@ router.get('/linkedin', (req, res, next) => {
     })(req, res, next);
 });
 
-// Callback después de autenticación con LinkedIn - CORREGIDO
+// Callback después de autenticación con LinkedIn
 router.get('/linkedin/callback', (req, res, next) => {
     console.log('Recibido callback de LinkedIn con parámetros:', {
         code: req.query.code ? 'PRESENTE' : 'AUSENTE',
@@ -99,7 +107,12 @@ router.get('/linkedin/callback', (req, res, next) => {
     
     if (req.query.error) {
         console.error('Error en callback de LinkedIn:', req.query.error, req.query.error_description);
-        return res.redirect(`/api/auth/login-error?error=${encodeURIComponent(req.query.error_description || req.query.error)}`);
+        const frontendCallbackUrl = process.env.FRONTEND_CALLBACK_URL || 'http://localhost:4200/auth/callback';
+        const redirectUrl = new URL(frontendCallbackUrl);
+        redirectUrl.searchParams.append('success', 'false');
+        redirectUrl.searchParams.append('error', req.query.error_description || req.query.error);
+        
+        return res.redirect(redirectUrl.toString());
     }
     
     handleSocialAuthCallback('linkedin', '/api/auth/login-error')(req, res, next);

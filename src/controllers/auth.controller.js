@@ -110,4 +110,13 @@ authCtrl.validateToken = (req, res) => {
     });
 };
 
+// Nuevo endpoint para validar token sin devolver todo el payload
+authCtrl.checkToken = (req, res) => {
+    // Si el middleware authenticate pasó correctamente, el token es válido
+    res.status(200).json({
+        valid: true,
+        message: "Token válido"
+    });
+};
+
 module.exports = authCtrl;

@@ -2,10 +2,6 @@
 const personaCtrl = require("../controllers/persona.controller");
 const express = require("express");
 const router = express.Router();
-const { authenticate, authorize } = require('../middleware/auth.middleware');
-
-// Middleware para proteger todas las rutas - solo admin
-router.use(authenticate, authorize('admin'));
 
 // Ruta para obtener personas con filtros
 router.get("/filter", personaCtrl.getPersonaFiltro);
@@ -17,11 +13,8 @@ router.get("/", personaCtrl.getPersonas);
 router.post("/", personaCtrl.createPersona);
 
 // Rutas para operaciones por ID (idPersona)
-router.get("/:id", personaCtrl.getPersona);
-router.put("/:id", personaCtrl.editPersona);
-router.delete("/:id", personaCtrl.deletePersona);
-
-// Ruta para importación masiva - solo para administradores
-router.post("/importar", personaCtrl.importarPersonas);
+router.get("/:id", personaCtrl.getPersona);     // El ID en el parámetro de ruta se mapea a idPersona
+router.put("/:id", personaCtrl.editPersona);    // El ID en el parámetro de ruta se mapea a idPersona
+router.delete("/:id", personaCtrl.deletePersona); // El ID en el parámetro de ruta se mapea a idPersona
 
 module.exports = router;
