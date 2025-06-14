@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "backend_fjv",
   "version": "1.0.0",
   "main": "index.js",
@@ -8,10 +9,21 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
+=======
+  "name": "backenfjv",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
+  },
+>>>>>>> a42aba374ff198c80c50f2db77b56079a7cc289b
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+<<<<<<< HEAD
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
@@ -20,5 +32,17 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
+=======
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "pg": "^8.16.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+>>>>>>> a42aba374ff198c80c50f2db77b56079a7cc289b
   }
 }

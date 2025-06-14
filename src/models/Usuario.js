@@ -1,0 +1,58 @@
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
+const Rol = require('./Rol'); // Importamos el modelo Rol para la relación
+const bcrypt = require('bcryptjs'); // Necesario para hashear contraseñas
+
+const Usuario = sequelize.define('Usuario', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    nombre: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    apellido: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+        validate: {
+            isEmail: true // Validación para formato de email
+        }
+    },
+    password: {
+        type: DataTypes.STRING, // Aquí almacenaremos el hash de la contraseña
+        allowNull: false
+    }
+}, {
+    tableName: 'usuarios', // Nombre de la tabla en la base de datos
+    timestamps: true,
+    hooks: {
+        // Hook (gancho) para hashear la contraseña antes de guardar el usuario
+        beforeCreate: async (usuario) => {
+            if (usuario.password) {
+                const salt = await bcrypt.genSalt(10); // Genera un "salt" para la encriptación
+                usuario.password = await bcrypt.hash(usuario.password, salt); // Hashea la contraseña
+            }
+        },
+        beforeUpdate: async (usuario) => {
+            // Solo hashea si la contraseña ha sido modificada
+            if (usuario.changed('password')) {
+                const salt = await bcrypt.genSalt(10);
+                usuario.password = await bcrypt.hash(usuario.password, salt);
+            }
+        }
+    }
+});
+
+// Método para comparar contraseñas (útil para el login)
+Usuario.prototype.comparePassword = async function(candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+};
+
+module.exports = Usuario;

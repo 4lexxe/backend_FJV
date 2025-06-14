@@ -1,10 +1,11 @@
-# Dependencias
+# Archivos de entorno y configuración sensible
+.env
+# Directorios de Node.js
 node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-package-lock.json
-yarn.lock
+.history
+.vscode
+dist/ # Si usas TypeScript o Babel y compilas tu código
+build/ # Otro nombre común para directorios de compilación
 
 # Variables de entorno
 .env
