@@ -63,7 +63,7 @@ app.use('/api/auth', require('./routes/auth.routes'));
 // Resto de rutas de la API
 app.use('/api/usuario', require('./routes/usuario.routes'));
 app.use('/api/rol', require('./routes/rol.routes'));
-app.use('/api/personas', require('./routes/persona.routes')); 
+app.use('/api/personas', require('./routes/persona.routes')); // Ahora incluye todas las funcionalidades de afiliados
 app.use('/api/clubs', require('./routes/club.routes'));
 app.use('/api/categorias', require('./routes/categoria.routes'));
 app.use('/api/equipos', require('./routes/equipo.routes'));
@@ -98,7 +98,10 @@ async function startServer() {
         // 5. Inicializar usuario administrador si no existe
         await initializeAdminUser();
         
-        // 6. Iniciar el servidor HTTP
+        // 6. Inicializar usuario regular si no existe
+        await initializeRegularUser();
+        
+        // 7. Iniciar el servidor HTTP
         app.listen(app.get('port'), () => {
             console.log(`🚀 Servidor backend escuchando en http://localhost:${app.get('port')}`);
         });
@@ -182,6 +185,52 @@ async function initializeAdminUser() {
         
     } catch (error) {
         console.error('❌ Error al inicializar usuario administrador:', error);
+    }
+}
+
+/**
+ * Inicializa un usuario regular si no existe
+ */
+async function initializeRegularUser() {
+    try {
+        const Rol = require('./models/Rol');
+        const Usuario = require('./models/Usuario');
+        
+        // Buscar rol de usuario
+        let userRol = await Rol.findOne({ where: { nombre: 'usuario' } });
+        
+        // Si no existe el rol usuario, salir (debería haberse creado en initializeDefaultData)
+        if (!userRol) {
+            console.error('❌ No se encontró el rol de usuario. No se pudo crear usuario regular.');
+            return;
+        }
+        
+        // Verificar si existe algún usuario con rol usuario
+        const userExists = await Usuario.findOne({
+            where: { rolId: userRol.id }
+        });
+        
+        if (userExists) {
+            console.log('✓ Usuario regular ya existe:', userExists.email);
+            return;
+        }
+        
+        // Datos del usuario regular por defecto
+        const regularUser = await Usuario.create({
+            nombre: 'Usuario',
+            apellido: 'Regular',
+            email: 'usuario@sistema.com',
+            password: 'Usuario123!', // Se hasheará automáticamente por el hook de beforeCreate
+            rolId: userRol.id,
+            emailVerificado: true
+        });
+        
+        console.log('✅ Usuario regular creado exitosamente:');
+        console.log(`   - Email: ${regularUser.email}`);
+        console.log(`   - Contraseña: Usuario123!`);
+        
+    } catch (error) {
+        console.error('❌ Error al inicializar usuario regular:', error);
     }
 }
 
