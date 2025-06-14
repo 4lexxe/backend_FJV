@@ -36,7 +36,7 @@ const authenticate = async (req, res, next) => {
         if (!usuario) {
             return res.status(401).json({
                 success: false,
-                message: 'Usuario no encontrado o token inválido'
+                message: 'Usuario no encontrado'
             });
         }
 

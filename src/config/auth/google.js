@@ -23,100 +23,45 @@ module.exports = (passport) => {
         passReqToCallback: true
     }, async (req, accessToken, refreshToken, profile, done) => {
         try {
-            console.log('Procesando autenticación de Google');
+            console.log('Procesando autenticación con Google:', profile.displayName);
             
-            // Buscar rol apropiado para usuarios sociales
-            const rol = await buscarRolParaUsuarioSocial();
-            if (!rol) {
-                return done(new Error('No se encontró un rol válido para usuarios'), false);
+            // Extraer email del perfil de Google
+            const email = profile.emails?.[0]?.value;
+            
+            if (!email) {
+                console.error('No se pudo obtener el email del usuario desde Google');
+                return done(new Error('No se pudo obtener el email de la cuenta de Google'), false);
             }
             
-            // Buscar o crear usuario
-            const usuario = await buscarOCrearUsuario(profile, rol.id);
+            // MODIFICACIÓN: Buscar si el usuario ya existe por email
+            const usuarioExistente = await Usuario.findOne({ where: { email } });
             
-            return done(null, usuario);
+            // Si el usuario no existe en la base de datos, rechazar la autenticación
+            if (!usuarioExistente) {
+                console.error(`Usuario con email ${email} no existe en la base de datos`);
+                return done(new Error('Usuario no encontrado'), false);
+            }
+            
+            // Si el usuario existe pero no tiene googleId, actualizarlo
+            if (!usuarioExistente.googleId) {
+                console.log(`Actualizando googleId para usuario existente: ${email}`);
+                usuarioExistente.googleId = profile.id;
+                usuarioExistente.providerType = 'google';
+                
+                // Si el usuario no tiene foto de perfil, usar la de Google
+                if (!usuarioExistente.fotoPerfil && profile.photos?.[0]?.value) {
+                    usuarioExistente.fotoPerfil = profile.photos[0].value;
+                }
+                
+                await usuarioExistente.save();
+            }
+            
+            // Autenticación exitosa
+            return done(null, usuarioExistente);
+            
         } catch (error) {
-            console.error('Error en autenticación Google:', error);
+            console.error('Error durante autenticación con Google:', error);
             return done(error, false);
         }
     }));
 };
-
-/**
- * Busca un rol apropiado para usuarios de autenticación social
- */
-async function buscarRolParaUsuarioSocial() {
-    // Intentar diferentes nombres comunes para roles de usuario
-    const nombresPosibles = ['usuario_social', 'user', 'usuario'];
-    
-    for (const nombre of nombresPosibles) {
-        const rol = await Rol.findOne({ where: { nombre } });
-        if (rol) return rol;
-    }
-    
-    // Último recurso: cualquier rol que no sea admin
-    const roles = await Rol.findAll();
-    const rolNoAdmin = roles.find(r => r.nombre !== 'admin');
-    
-    // Si hay al menos un rol, aunque sea admin, usarlo
-    return rolNoAdmin || roles[0] || null;
-}
-
-/**
- * Busca un usuario existente o crea uno nuevo basado en perfil de Google
- */
-async function buscarOCrearUsuario(profile, rolId) {
-    // Extraer datos del perfil
-    const email = profile.emails?.[0]?.value;
-    if (!email) {
-        throw new Error('No se pudo obtener el email del perfil de Google');
-    }
-    
-    // Buscar usuario por el ID de Google
-    let usuario = await Usuario.findOne({ 
-        where: { googleId: profile.id } // Sequelize mapeará esto a google_id
-    });
-    
-    // Si no se encuentra, intentar buscar por email
-    if (!usuario) {
-        usuario = await Usuario.findOne({ where: { email } });
-    }
-    
-    // Si no existe, crear nuevo usuario
-    if (!usuario) {
-        const nombre = profile.name?.givenName || profile.displayName?.split(' ')[0] || 'Usuario';
-        const apellido = profile.name?.familyName || profile.displayName?.split(' ').slice(1).join(' ') || 'Google';
-        const fotoPerfil = profile.photos?.[0]?.value;
-        
-        try {
-            usuario = await Usuario.create({
-                nombre,
-                apellido,
-                email,
-                password: Math.random().toString(36).substring(2, 15),
-                googleId: profile.id, // Se mapeará a google_id
-                providerType: 'google', // Se mapeará a provider_type
-                fotoPerfil, // Se mapeará a foto_perfil
-                emailVerificado: profile.emails?.[0]?.verified || false, // Se mapeará a email_verificado
-                rolId
-            });
-            
-            console.log(`Nuevo usuario creado: ${email} (${nombre} ${apellido})`);
-        } catch (error) {
-            console.error('Error al crear usuario:', error);
-            throw error;
-        }
-    } 
-    // Si existe pero no tiene googleId, actualizarlo
-    else if (!usuario.googleId) {
-        usuario.googleId = profile.id;
-        usuario.providerType = 'google';
-        if (!usuario.fotoPerfil && profile.photos?.[0]?.value) {
-            usuario.fotoPerfil = profile.photos[0].value;
-        }
-        await usuario.save();
-        console.log(`Usuario existente vinculado con Google: ${email}`);
-    }
-    
-    return usuario;
-}

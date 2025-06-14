@@ -21,6 +21,12 @@ const handleSocialAuthCallback = (strategyName, errorRedirect) => {
             if (err || !user) {
                 const errorMsg = err?.message || 'Error de autenticación';
                 console.error(`Error en autenticación ${strategyName}:`, errorMsg);
+                
+                // Simplificar el mensaje de error
+                if (errorMsg.includes('no registrado') || errorMsg.includes('no encontrado') || errorMsg.includes('no existe')) {
+                    return res.redirect(`${errorRedirect}?error=${encodeURIComponent('Usuario no encontrado')}`);
+                }
+                
                 return res.redirect(`${errorRedirect}?error=${encodeURIComponent(errorMsg)}`);
             }
             

@@ -42,19 +42,41 @@ async function handleLinkedInAuth(req, accessToken, refreshToken, params, profil
         // Obtener perfil desde userinfo endpoint
         profile = await fetchUserProfile(accessToken);
         
+        // Asegurar que tenemos email
+        ensureProfileHasEmail(profile);
+        
+        // Extraer email del perfil
+        const email = profile.emails[0].value;
+        
+        // MODIFICACIÓN: Buscar si el usuario ya existe por email
+        const usuarioExistente = await Usuario.findOne({ where: { email } });
+        
+        // Si el usuario no existe en la base de datos, rechazar la autenticación
+        if (!usuarioExistente) {
+            console.error(`Usuario con email ${email} no existe en la base de datos`);
+            return done(new Error('Usuario no encontrado'), false);
+        }
+        
         // Buscar rol apropiado
         const rol = await buscarRolParaUsuarioSocial();
         if (!rol) {
             return done(new Error('No se encontró un rol válido para usuarios'), false);
         }
         
-        // Asegurar que tenemos email
-        ensureProfileHasEmail(profile);
+        // Si el usuario existe pero no tiene linkedinId, actualizarlo
+        if (!usuarioExistente.linkedinId) {
+            usuarioExistente.linkedinId = profile.id;
+            usuarioExistente.providerType = 'linkedin';
+            
+            // Si el usuario no tiene foto de perfil, usar la de LinkedIn
+            if (!usuarioExistente.fotoPerfil && profile.photos?.[0]?.value) {
+                usuarioExistente.fotoPerfil = profile.photos[0].value;
+            }
+            
+            await usuarioExistente.save();
+        }
         
-        // Buscar o crear usuario
-        const usuario = await buscarOCrearUsuario(profile, rol.id);
-        
-        return done(null, usuario);
+        return done(null, usuarioExistente);
     } catch (error) {
         console.error('Error en autenticación LinkedIn:', error);
         return done(error, false);
@@ -135,6 +157,7 @@ async function buscarRolParaUsuarioSocial() {
 
 /**
  * Busca un usuario existente o crea uno nuevo basado en perfil de LinkedIn
+ * NOTA: Esta función ahora solo se usa para actualizar usuarios existentes, no para crear nuevos
  */
 async function buscarOCrearUsuario(profile, rolId) {
     const email = profile.emails[0].value;
@@ -143,12 +166,13 @@ async function buscarOCrearUsuario(profile, rolId) {
     let usuario = await Usuario.findOne({ where: { linkedinId: profile.id } }) || 
                  await Usuario.findOne({ where: { email } });
     
-    // Si no existe, crear nuevo usuario
+    // Si no existe, rechazar en handleLinkedInAuth
     if (!usuario) {
-        usuario = await crearNuevoUsuario(profile, email, rolId);
-    } 
+        throw new Error('Usuario no encontrado en la base de datos');
+    }
+    
     // Si existe pero no tiene linkedinId, actualizarlo
-    else if (!usuario.linkedinId) {
+    if (!usuario.linkedinId) {
         usuario = await actualizarUsuarioExistente(usuario, profile);
     }
     

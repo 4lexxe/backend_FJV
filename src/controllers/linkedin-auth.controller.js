@@ -18,7 +18,7 @@ linkedinAuthController.handleLinkedInCallback = (req, res) => {
             console.error('No hay usuario autenticado en la solicitud');
             return res.status(401).json({
                 success: false,
-                message: "Autenticación fallida"
+                message: "Usuario no encontrado"
             });
         }
         

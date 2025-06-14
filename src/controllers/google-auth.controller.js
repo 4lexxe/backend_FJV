@@ -36,7 +36,7 @@ googleAuthController.handleGoogleCallback = (req, res) => {
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: "Autenticación fallida"
+                message: "Autenticación fallida. Usuario no encontrado."
             });
         }
         
