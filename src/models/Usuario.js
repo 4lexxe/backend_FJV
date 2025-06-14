@@ -20,9 +20,20 @@ const Usuario = sequelize.define('Usuario', {
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
+        unique: {
+            args: true,
+            msg: 'El email ya está registrado en el sistema'
+        },
         validate: {
-            isEmail: true
+            isEmail: {
+                msg: 'El formato del email no es válido'
+            },
+            notNull: {
+                msg: 'El email es obligatorio'
+            },
+            notEmpty: {
+                msg: 'El email no puede estar vacío'
+            }
         }
     },
     password: {
@@ -74,7 +85,14 @@ const Usuario = sequelize.define('Usuario', {
                 usuario.password = await bcrypt.hash(usuario.password, salt);
             }
         }
-    }
+    },
+    indexes: [
+        // Agregamos un índice explícito para mejorar el rendimiento en búsquedas por email
+        {
+            unique: true,
+            fields: ['email']
+        }
+    ]
 });
 
 // Método para comparar contraseñas

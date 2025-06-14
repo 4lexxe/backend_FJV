@@ -43,6 +43,16 @@ usuarioCtrl.createUsuario = async (req, res) => {
     }
     */
     try {
+        // Verificar si el email ya existe antes de crear el usuario
+        const emailExistente = await Usuario.findOne({ where: { email: req.body.email } });
+        if (emailExistente) {
+            return res.status(400).json({
+                status: "0",
+                msg: "El email ya está registrado en el sistema",
+                error: "EMAIL_ALREADY_EXISTS"
+            });
+        }
+
         const usuario = await Usuario.create(req.body);
         // Al devolver, se excluye la contraseña para seguridad
         const usuarioResponse = { ...usuario.toJSON() };
@@ -54,10 +64,34 @@ usuarioCtrl.createUsuario = async (req, res) => {
             usuario: usuarioResponse
         });
     } catch (error) {
-        console.error("Error en createUsuario:", error);
-        res.status(400).json({
+        console.error("Error al crear usuario:", error);
+        
+        // Manejo específico para errores de validación de Sequelize
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({
+                status: "0",
+                msg: "El email ya está registrado en el sistema",
+                error: "EMAIL_ALREADY_EXISTS"
+            });
+        }
+        
+        // Manejo de otros errores de validación
+        if (error.name === 'SequelizeValidationError') {
+            const validationErrors = error.errors.map(err => ({
+                field: err.path,
+                message: err.message
+            }));
+            
+            return res.status(400).json({
+                status: "0",
+                msg: "Error de validación",
+                errors: validationErrors
+            });
+        }
+        
+        res.status(500).json({
             status: "0",
-            msg: "Error procesando operación.",
+            msg: "Error procesando la operación.",
             error: error.message
         });
     }
