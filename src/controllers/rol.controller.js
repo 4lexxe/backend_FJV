@@ -91,7 +91,7 @@ rolCtrl.editRol = async (req, res) => {
     */
     try {
         const [updatedRowsCount, updatedRoles] = await Rol.update(req.body, {
-            where: { id: req.params.id },
+            where: { idRol: req.params.id }, // Asumiendo que la PK es idRol
             returning: true // Para PostgreSQL, retorna los registros actualizados
         });
 
@@ -134,7 +134,7 @@ rolCtrl.deleteRol = async (req, res) => {
         // Por ahora, asumimos que la DB manejará la restricción o que no habrá usuarios asociados.
 
         const deletedRows = await Rol.destroy({
-            where: { id: req.params.id }
+            where: { idRol: req.params.id } // Asumiendo que la PK es idRol
         });
 
         if (deletedRows === 0) {
