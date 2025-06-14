@@ -1,3 +1,8 @@
+/**
+ * Controlador principal de autenticación
+ * Maneja login tradicional y generación de tokens
+ */
+
 const Usuario = require('../models/Usuario');
 const Rol = require('../models/Rol');
 const jwt = require('jsonwebtoken');
@@ -20,24 +25,6 @@ const generateToken = (user) => {
 
 // Login - Autenticar usuario
 authCtrl.login = async (req, res) => {
-    /*
-    #swagger.tags = ['Autenticación']
-    #swagger.summary = 'Iniciar sesión'
-    #swagger.description = 'Autentica un usuario y retorna un token JWT.'
-    #swagger.parameters['body'] = {
-      in: 'body',
-      description: 'Credenciales del usuario.',
-      required: true,
-      schema: {
-        type: 'object',
-        properties: {
-          email: { type: 'string' },
-          password: { type: 'string' }
-        },
-        required: ['email', 'password']
-      }
-    }
-    */
     try {
         const { email, password } = req.body;
 

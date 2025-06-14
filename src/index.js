@@ -1,94 +1,35 @@
+/**
+ * Punto de entrada principal de la aplicación
+ * 
+ * Configura Express, carga middlewares y rutas, y arranca el servidor
+ */
+
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
+const path = require('path');
 require('dotenv').config(); 
 
-//Importar Sequelize y la función de conexión a la DB ---
+// Importar configuraciones y modelos
 const { sequelize, connectDB } = require('./config/database');
 const passport = require('./config/passport');
-
-//  Importar TODOS los modelos ---
-const Rol = require('./models/Rol');
-const Usuario = require('./models/Usuario');
-const Club = require('./models/Club');
-const Categoria = require('./models/Categoria');
-const Equipo = require('./models/Equipo');
-const Persona = require('./models/Persona');
-
-// --- Asociaciones para Club ---
-Club.hasMany(Persona, {
-    foreignKey: 'idClub',
-    sourceKey: 'idClub', 
-    as: 'personas',     
-    onDelete: 'SET NULL', 
-    hooks: true
-});
-Club.hasMany(Equipo, {
-    foreignKey: 'idClub',
-    sourceKey: 'idClub', 
-    as: 'equipos',      
-    onDelete: 'CASCADE', 
-    hooks: true
-});
-
-// --- Asociaciones para Persona ---
-Persona.belongsTo(Club, {
-    foreignKey: 'idClub',
-    targetKey: 'idClub', 
-    as: 'club'          
-});
-
-// --- Asociaciones para Equipo ---
-Equipo.belongsTo(Club, {
-    foreignKey: 'idClub',
-    targetKey: 'idClub', 
-    as: 'club'          
-});
-Equipo.belongsTo(Categoria, {
-    foreignKey: 'idCategoria',
-    targetKey: 'idCategoria', 
-    as: 'categoria'     
-});
-
-// --- Asociaciones para Categoría ---
-Categoria.hasMany(Equipo, {
-    foreignKey: 'idCategoria',
-    sourceKey: 'idCategoria', 
-    as: 'equipos',      
-    onDelete: 'SET NULL',
-    hooks: true
-});
-
-// --- Asociaciones para Rol y Usuario ---
-
-if (Usuario && Rol) {
-    Rol.hasMany(Usuario, {
-        foreignKey: 'rolId', 
-        sourceKey: 'id',    
-        as: 'usuarios',
-        onDelete: 'SET NULL', 
-        hooks: true
-    });
-    Usuario.belongsTo(Rol, {
-        foreignKey: 'rolId', 
-        targetKey: 'id',     
-        as: 'rol'
-    });
-}
-
+const defineAssociations = require('./models/associations');
 
 // --- Inicialización de Express ---
-var app = express();
+const app = express();
 
-// Middlewares
+// === MIDDLEWARES ===
+// Parseo de JSON y URL encoded
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// CORS
 app.use(cors({ 
-    origin: 'http://localhost:4200',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
     credentials: true
 }));
 
-// Configuración de sesiones para Passport
+// Sesiones para autenticación
 app.use(session({
     secret: process.env.JWT_SECRET || 'tu_clave_secreta_jwt',
     resave: false,
@@ -99,17 +40,23 @@ app.use(session({
     }
 }));
 
-// Inicializar Passport
+// Passport para autenticación
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Configuraciones (setting)
+// Puerto
 app.set('port', process.env.PORT || 3000);
 
-// --- Rutas de API ---
+// === RUTAS ===
 app.get('/', (req, res) => {
-    res.send('API de la Federación Jujeña de Voley - ¡Todo funciona!');
+    res.json({
+        name: 'API de la Federación Jujeña de Voley',
+        version: '1.0.0',
+        status: 'OK'
+    });
 });
+
+// Cargar rutas API
 app.use('/api/usuario', require('./routes/usuario.routes'));
 app.use('/api/rol', require('./routes/rol.routes'));
 app.use('/api/personas', require('./routes/persona.routes')); 
@@ -118,25 +65,71 @@ app.use('/api/categorias', require('./routes/categoria.routes'));
 app.use('/api/equipos', require('./routes/equipo.routes'));
 app.use('/api/auth', require('./routes/auth.routes'));
 
-// --- Iniciar el servidor ---
+// Middleware para manejo de errores 404
+app.use((req, res, next) => {
+    res.status(404).json({
+        success: false,
+        message: 'Ruta no encontrada',
+        path: req.originalUrl
+    });
+});
+
+// === INICIAR SERVIDOR ===
 async function startServer() {
     try {
-       
+        // 1. Conectar a la base de datos
         await connectDB();
         console.log('✔ Conexión a la base de datos establecida correctamente.');
-
         
+        // 2. Definir asociaciones entre modelos
+        defineAssociations();
+        
+        // 3. Sincronizar modelos con la base de datos
         await sequelize.sync({ force: false });
         console.log("✔ Todos los modelos fueron sincronizados exitosamente con la base de datos.");
-
+        
+        // 4. Inicializar datos iniciales si es necesario (roles por defecto, etc.)
+        await initializeDefaultData();
+        
+        // 5. Iniciar el servidor HTTP
         app.listen(app.get('port'), () => {
             console.log(`🚀 Servidor backend escuchando en http://localhost:${app.get('port')}`);
         });
     } catch (error) {
-        console.error('❌ Error al conectar o sincronizar con PostgreSQL:', error);
-       
+        console.error('❌ Error al iniciar el servidor:', error);
         process.exit(1);
     }
 }
 
+/**
+ * Inicializa datos por defecto necesarios para el funcionamiento del sistema
+ */
+async function initializeDefaultData() {
+    try {
+        const Rol = require('./models/Rol');
+        
+        // Verificar si ya existen roles
+        const rolesCount = await Rol.count();
+        
+        if (rolesCount === 0) {
+            console.log('Creando roles predeterminados...');
+            
+            // Crear roles básicos
+            await Rol.bulkCreate([
+                { nombre: 'admin', descripcion: 'Administrador del sistema' },
+                { nombre: 'usuario', descripcion: 'Usuario regular' },
+                { nombre: 'usuario_social', descripcion: 'Usuario de redes sociales' }
+            ]);
+            
+            console.log('✓ Roles predeterminados creados correctamente');
+        } else {
+            console.log(`✓ Ya existen ${rolesCount} roles en el sistema`);
+        }
+    } catch (error) {
+        console.error('Error al inicializar datos predeterminados:', error);
+        throw error; // Propagar error para que se maneje en startServer
+    }
+}
+
+// Iniciar el servidor
 startServer();

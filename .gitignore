@@ -1,18 +1,35 @@
-# Archivos de entorno y configuración sensible
+# Variables de entorno y configuración sensible - NUNCA commitear estas
 .env
+.env.*
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+*.env
+config.*.json
+credentials.json
+serviceAccount*.json
+
+# Archivos de claves y certificados
+*.pem
+*.key
+*.cert
+*.crt
+
+# Archivos de configuración con credenciales
+*config.js
+*config.ts
+*secrets.*
+
 # Directorios de Node.js
 node_modules/
 .history
 .vscode
-dist/ # Si usas TypeScript o Babel y compilas tu código
-build/ # Otro nombre común para directorios de compilación
-
-# Variables de entorno
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+dist/
+build/
 
 # Directorios de editores
 .vscode/

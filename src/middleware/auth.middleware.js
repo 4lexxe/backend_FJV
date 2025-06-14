@@ -1,30 +1,55 @@
+/**
+ * Middleware de autenticación y autorización
+ * 
+ * Este archivo contiene middlewares para verificar tokens JWT
+ * y proteger rutas según permisos de usuario
+ */
+
 const jwt = require('jsonwebtoken');
 const Usuario = require('../models/Usuario');
 
-const authMiddleware = async (req, res, next) => {
+/**
+ * Middleware para verificar token JWT
+ * Verifica que el usuario esté autenticado y añade el usuario a req.user
+ */
+const authenticate = async (req, res, next) => {
     try {
+        // Extraer token del encabezado Authorization
         const token = req.header('Authorization')?.replace('Bearer ', '');
         
         if (!token) {
             return res.status(401).json({
                 success: false,
-                message: 'Token de acceso requerido'
+                message: 'Acceso denegado. Token no proporcionado'
             });
         }
 
+        // Verificar y decodificar el token
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'tu_clave_secreta_jwt');
         
-        const usuario = await Usuario.findByPk(decoded.id);
+        // Buscar usuario por ID desde el token
+        const usuario = await Usuario.findByPk(decoded.id, {
+            include: ['rol'] // Incluir información del rol
+        });
+        
         if (!usuario) {
             return res.status(401).json({
                 success: false,
-                message: 'Token inválido'
+                message: 'Usuario no encontrado o token inválido'
             });
         }
 
+        // Añadir usuario a la solicitud
         req.user = usuario;
         next();
     } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({
+                success: false,
+                message: 'Token expirado. Por favor inicie sesión nuevamente'
+            });
+        }
+        
         res.status(401).json({
             success: false,
             message: 'Token inválido'
@@ -32,4 +57,38 @@ const authMiddleware = async (req, res, next) => {
     }
 };
 
-module.exports = authMiddleware;
+/**
+ * Middleware para verificar roles
+ * Se usa después de authenticate para verificar permisos
+ */
+const authorize = (roles) => {
+    // Convertir a array si se proporciona un solo rol
+    if (typeof roles === 'string') {
+        roles = [roles];
+    }
+    
+    return (req, res, next) => {
+        // authenticate debe ejecutarse primero
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: 'No autenticado'
+            });
+        }
+        
+        // Verificar si el rol del usuario está en la lista de roles permitidos
+        if (roles.length && !roles.includes(req.user.rol?.nombre)) {
+            return res.status(403).json({
+                success: false,
+                message: 'No tiene permisos para acceder a este recurso'
+            });
+        }
+        
+        next();
+    };
+};
+
+module.exports = {
+    authenticate,
+    authorize
+};
