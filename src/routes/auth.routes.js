@@ -8,7 +8,7 @@ const passport = require('../config/passport');
 const authCtrl = require('../controllers/auth.controller');
 const googleAuthCtrl = require('../controllers/google-auth.controller');
 const linkedinAuthCtrl = require('../controllers/linkedin-auth.controller');
-const { authenticate } = require('../middleware/auth.middleware');
+const { authenticate, authorize } = require('../middleware/auth.middleware');
 
 // Función reutilizable para manejar callbacks de autenticación social
 const handleSocialAuthCallback = (strategyName, errorRedirect) => {
@@ -40,7 +40,24 @@ const handleSocialAuthCallback = (strategyName, errorRedirect) => {
 // RUTAS DE AUTENTICACIÓN TRADICIONAL
 //------------------------------------------------------------
 
+// Iniciar sesión con email y contraseña
 router.post('/login', authCtrl.login);
+
+// Validar token JWT
+router.get('/validate-token', authenticate, authCtrl.validateToken);
+
+// Ruta protegida de ejemplo - solo accesible por administradores
+router.get('/admin-only', authenticate, authorize('admin'), (req, res) => {
+    res.json({ 
+        success: true,
+        message: 'Tienes acceso como administrador',
+        user: {
+            id: req.user.id,
+            nombre: req.user.nombre,
+            rol: req.user.rol?.nombre
+        }
+    });
+});
 
 //------------------------------------------------------------
 // RUTAS DE AUTENTICACIÓN CON GOOGLE

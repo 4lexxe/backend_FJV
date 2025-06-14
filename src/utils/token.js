@@ -34,7 +34,18 @@ const verifyToken = (token) => {
     }
 };
 
+/**
+ * Extrae token de los headers de una solicitud
+ */
+const extractTokenFromHeader = (req) => {
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+        return req.headers.authorization.slice(7);
+    }
+    return null;
+};
+
 module.exports = {
     generateToken,
-    verifyToken
+    verifyToken,
+    extractTokenFromHeader
 };

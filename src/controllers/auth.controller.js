@@ -6,7 +6,6 @@
 const Usuario = require('../models/Usuario');
 const Rol = require('../models/Rol');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 
 const authCtrl = {};
 
@@ -46,6 +45,7 @@ authCtrl.login = async (req, res) => {
             }]
         });
 
+        // Verificar si el usuario existe
         if (!usuario) {
             return res.status(401).json({
                 success: false,
@@ -72,7 +72,8 @@ authCtrl.login = async (req, res) => {
             apellido: usuario.apellido,
             email: usuario.email,
             rolId: usuario.rolId,
-            rol: usuario.rol
+            rol: usuario.rol,
+            fotoPerfil: usuario.fotoPerfil
         };
 
         res.status(200).json({
@@ -90,6 +91,23 @@ authCtrl.login = async (req, res) => {
             error: error.message
         });
     }
+};
+
+// Validar token JWT
+authCtrl.validateToken = (req, res) => {
+    // El middleware auth.middleware ya valida el token antes de llegar aquí
+    res.status(200).json({
+        success: true,
+        message: "Token válido",
+        user: {
+            id: req.user.id,
+            email: req.user.email,
+            nombre: req.user.nombre,
+            apellido: req.user.apellido,
+            rolId: req.user.rolId,
+            rol: req.user.rol
+        }
+    });
 };
 
 module.exports = authCtrl;

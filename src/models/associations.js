@@ -63,20 +63,15 @@ function defineAssociations() {
     });
 
     // --- Asociaciones para Rol y Usuario ---
-    if (Usuario && Rol) {
-        Rol.hasMany(Usuario, {
-            foreignKey: 'rolId', 
-            sourceKey: 'id',    
-            as: 'usuarios',
-            onDelete: 'SET NULL', 
-            hooks: true
-        });
-        Usuario.belongsTo(Rol, {
-            foreignKey: 'rolId', 
-            targetKey: 'id',     
-            as: 'rol'
-        });
-    }
+    Usuario.belongsTo(Rol, { 
+        foreignKey: 'rolId', 
+        as: 'rol' 
+    });
+    
+    Rol.hasMany(Usuario, { 
+        foreignKey: 'rolId', 
+        as: 'usuarios' 
+    });
     
     console.log('Asociaciones definidas correctamente');
 }

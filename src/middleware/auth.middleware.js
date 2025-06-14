@@ -31,7 +31,8 @@ const authenticate = async (req, res, next) => {
         const usuario = await Usuario.findByPk(decoded.id, {
             include: ['rol'] // Incluir información del rol
         });
-        
+
+        // Verificar si el usuario existe
         if (!usuario) {
             return res.status(401).json({
                 success: false,
