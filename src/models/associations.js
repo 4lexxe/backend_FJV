@@ -11,6 +11,7 @@ const Club = require('./Club');
 const Categoria = require('./Categoria');
 const Equipo = require('./Equipo');
 const Persona = require('./Persona');
+const Cobro = require('./Cobro');
 
 /**
  * Define todas las asociaciones entre modelos
@@ -33,6 +34,13 @@ function defineAssociations() {
         onDelete: 'CASCADE', 
         hooks: true
     });
+    Club.hasMany(Cobro, {
+        foreignKey: 'idClub',
+        sourceKey: 'idClub',
+        as: 'cobros',
+        onDelete: 'CASCADE',
+        hooks: true
+    });
 
     // --- Asociaciones para Persona ---
     Persona.belongsTo(Club, {
@@ -52,6 +60,13 @@ function defineAssociations() {
         targetKey: 'idCategoria', 
         as: 'categoria'     
     });
+    Equipo.hasMany(Cobro, {
+        foreignKey: 'idEquipo',
+        sourceKey: 'idEquipo',
+        as: 'cobros',
+        onDelete: 'SET NULL',
+        hooks: true
+    });
 
     // --- Asociaciones para Categoría ---
     Categoria.hasMany(Equipo, {
@@ -60,6 +75,18 @@ function defineAssociations() {
         as: 'equipos',      
         onDelete: 'SET NULL',
         hooks: true
+    });
+
+    // --- Asociaciones para Cobro ---
+    Cobro.belongsTo(Club, {
+        foreignKey: 'idClub',
+        targetKey: 'idClub',
+        as: 'club'
+    });
+    Cobro.belongsTo(Equipo, {
+        foreignKey: 'idEquipo',
+        targetKey: 'idEquipo',
+        as: 'equipo'
     });
 
     // --- Asociaciones para Rol y Usuario ---

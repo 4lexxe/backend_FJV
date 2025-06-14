@@ -65,6 +65,7 @@ app.use('/api/personas', require('./routes/persona.routes')); // Ahora incluye t
 app.use('/api/clubs', require('./routes/club.routes'));
 app.use('/api/categorias', require('./routes/categoria.routes'));
 app.use('/api/equipos', require('./routes/equipo.routes'));
+app.use('/api/cobros', require('./routes/cobro.routes')); // Añadir nueva ruta de cobros
 
 // Middleware para manejo de errores 404 - DEBE SER EL ÚLTIMO
 app.use((req, res, next) => {
