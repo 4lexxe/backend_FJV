@@ -95,7 +95,10 @@ async function startServer() {
         // 4. Inicializar datos iniciales si es necesario (roles por defecto, etc.)
         await initializeDefaultData();
         
-        // 5. Iniciar el servidor HTTP
+        // 5. Inicializar usuario administrador si no existe
+        await initializeAdminUser();
+        
+        // 6. Iniciar el servidor HTTP
         app.listen(app.get('port'), () => {
             console.log(`🚀 Servidor backend escuchando en http://localhost:${app.get('port')}`);
         });
@@ -132,6 +135,53 @@ async function initializeDefaultData() {
     } catch (error) {
         console.error('Error al inicializar datos predeterminados:', error);
         throw error; // Propagar error para que se maneje en startServer
+    }
+}
+
+/**
+ * Inicializa un usuario administrador si no existe
+ */
+async function initializeAdminUser() {
+    try {
+        const Rol = require('./models/Rol');
+        const Usuario = require('./models/Usuario');
+        
+        // Buscar rol de administrador
+        let adminRol = await Rol.findOne({ where: { nombre: 'admin' } });
+        
+        // Si no existe el rol admin, salir (debería haberse creado en initializeDefaultData)
+        if (!adminRol) {
+            console.error('❌ No se encontró el rol de administrador. No se pudo crear usuario admin.');
+            return;
+        }
+        
+        // Verificar si existe algún usuario con rol admin
+        const adminExists = await Usuario.findOne({
+            where: { rolId: adminRol.id }
+        });
+        
+        if (adminExists) {
+            console.log('✓ Usuario administrador ya existe:', adminExists.email);
+            return;
+        }
+        
+        // Datos del administrador por defecto
+        const adminUser = await Usuario.create({
+            nombre: 'Admin',
+            apellido: 'Sistema',
+            email: 'admin@sistema.com',
+            password: 'Admin123!', // Se hasheará automáticamente por el hook de beforeCreate
+            rolId: adminRol.id,
+            emailVerificado: true
+        });
+        
+        console.log('✅ Usuario administrador creado exitosamente:');
+        console.log(`   - Email: ${adminUser.email}`);
+        console.log(`   - Contraseña: Admin123!`);
+        console.log('⚠️  IMPORTANTE: Cambie la contraseña después del primer inicio de sesión');
+        
+    } catch (error) {
+        console.error('❌ Error al inicializar usuario administrador:', error);
     }
 }
 
