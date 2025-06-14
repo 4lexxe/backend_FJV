@@ -48,6 +48,7 @@ app.use(passport.session());
 app.set('port', process.env.PORT || 3000);
 
 // === RUTAS ===
+// La API base
 app.get('/', (req, res) => {
     res.json({
         name: 'API de la Federación Jujeña de Voley',
@@ -56,17 +57,20 @@ app.get('/', (req, res) => {
     });
 });
 
-// Cargar rutas API
+// Importante: asegurar que las rutas de autenticación se carguen primero
+app.use('/api/auth', require('./routes/auth.routes'));
+
+// Resto de rutas de la API
 app.use('/api/usuario', require('./routes/usuario.routes'));
 app.use('/api/rol', require('./routes/rol.routes'));
 app.use('/api/personas', require('./routes/persona.routes')); 
 app.use('/api/clubs', require('./routes/club.routes'));
 app.use('/api/categorias', require('./routes/categoria.routes'));
 app.use('/api/equipos', require('./routes/equipo.routes'));
-app.use('/api/auth', require('./routes/auth.routes'));
 
-// Middleware para manejo de errores 404
+// Middleware para manejo de errores 404 - DEBE SER EL ÚLTIMO
 app.use((req, res, next) => {
+    console.log(`Ruta no encontrada: ${req.method} ${req.originalUrl}`);
     res.status(404).json({
         success: false,
         message: 'Ruta no encontrada',

@@ -11,6 +11,7 @@ const Usuario = require('../models/Usuario');
 // Importar estrategias
 const configureJwtStrategy = require('./auth/jwt');
 const configureGoogleStrategy = require('./auth/google');
+const configureLinkedInStrategy = require('./auth/linkedin');
 
 // Configurar serialización/deserialización de usuarios
 passport.serializeUser((user, done) => {
@@ -31,5 +32,6 @@ passport.deserializeUser(async (id, done) => {
 // Configurar estrategias
 configureJwtStrategy(passport);
 configureGoogleStrategy(passport);
+configureLinkedInStrategy(passport);
 
 module.exports = passport;

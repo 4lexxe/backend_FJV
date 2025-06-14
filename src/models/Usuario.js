@@ -36,6 +36,12 @@ const Usuario = sequelize.define('Usuario', {
         unique: true,
         field: 'google_id' // Mapeo a la columna google_id
     },
+    linkedinId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+        field: 'linkedin_id' // Mapeo a la columna linkedin_id
+    },
     providerType: {
         type: DataTypes.STRING,
         allowNull: true,
