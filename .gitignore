@@ -1,54 +1,55 @@
-# Archivos de entorno y configuración sensible
+# Variables de entorno y configuración sensible - NUNCA commitear estas
 .env
+.env.*
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+*.env
+config.*.json
+credentials.json
+serviceAccount*.json
+
+# Archivos de claves y certificados
+*.pem
+*.key
+*.cert
+*.crt
+
+# Archivos de configuración con credenciales
+*config.js
+*config.ts
+*secrets.*
+
 # Directorios de Node.js
 node_modules/
 .history
 .vscode
-dist/ # Si usas TypeScript o Babel y compilas tu código
-build/ # Otro nombre común para directorios de compilación
+dist/
+build/
 
-# Archivos de depuración y logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.nyc_output/ # Cobertura de tests
-coverage/   # Cobertura de tests
-.DS_Store # Archivos de macOS
-
-# Variables de entorno y configuración sensible
-.env # Archivo para variables de entorno (¡MUY IMPORTANTE!)
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.*.local
-config/*.env # Si tienes archivos .env en una subcarpeta config/
-config/config.json # Si tu configuración de Sequelize/DB incluye credenciales aquí y no en .env
-
-# Archivos de base de datos específicos
-*.sqlite
-*.sqlite3
-/data/*.db # Si tu base de datos SQLite se guarda en una carpeta 'data'
-
-# Archivos de respaldo y temporales
-*.bak
-*.tmp
-*.swp # Archivos de swap de Vim
-
-# Archivos generados por IDEs
-.idea/ # Directorio de configuración de WebStorm/IntelliJ
-.vscode/ # Directorio de configuración de VSCode (opcional, a veces es útil compartir settings, pero no secretos)
+# Directorios de editores
+.vscode/
+.history/
+.idea/
 *.sublime-project
 *.sublime-workspace
 
-# Archivos específicos de Docker
-Dockerfile.local # Si usas un Dockerfile local con secretos
-.dockerignore
+# Archivos de sistema
+.DS_Store
+Thumbs.db
 
-# Archivos de Swagger (si generas el JSON de salida y no quieres rastrearlo)
-swagger_output.json # Si generas este archivo y no quieres que esté en el repo
+# Directorios de compilación
+/dist
+/build
+/out
 
-# Archivos de migración de Sequelize que ya se han ejecutado y no necesitas en el historial de git (Opcional, pero se recomienda rastrearlos)
-# migrations/*.js # Si solo quieres mantener los modelos y no las migraciones ya aplicadas, aunque NO es lo más común.
-                 # Generalmente, las migraciones se rastrean en Git para que todo el equipo tenga las mismas.
+# Archivos de logs
+logs
+*.log
+
+# Archivos de cobertura
+coverage/

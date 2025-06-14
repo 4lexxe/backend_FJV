@@ -1,5 +1,5 @@
 const Rol = require("../models/Rol");
-const { Op } = require('sequelize'); // Para los operadores de Sequelize
+const { Op } = require('sequelize');
 
 const rolCtrl = {};
 
@@ -31,7 +31,7 @@ rolCtrl.createRol = async (req, res) => {
       in: 'body',
       description: 'Datos del rol a crear.',
       required: true,
-      schema: { $ref: '#/definitions/Rol' } // Asumiendo que has definido 'Rol' en tus definiciones de Swagger
+      schema: { $ref: '#/definitions/Rol' }
     }
     */
     try {
@@ -91,8 +91,8 @@ rolCtrl.editRol = async (req, res) => {
     */
     try {
         const [updatedRowsCount, updatedRoles] = await Rol.update(req.body, {
-            where: { idRol: req.params.id }, // Asumiendo que la PK es idRol
-            returning: true // Para PostgreSQL, retorna los registros actualizados
+            where: { id: req.params.id }, // Cambiado de idRol a id según tu modelo
+            returning: true
         });
 
         if (updatedRowsCount === 0) {
@@ -124,17 +124,8 @@ rolCtrl.deleteRol = async (req, res) => {
     #swagger.description = 'Elimina un rol de la base de datos usando su ID.'
     */
     try {
-        // Antes de eliminar un rol, considera si hay usuarios asociados a él.
-        // Si hay usuarios con este rol, la base de datos podría impedir la eliminación
-        // (si tienes restricciones de clave externa configuradas) o podrías dejarlos
-        // sin rol válido. Es buena práctica manejar esto:
-        // 1. Reasignar usuarios a otro rol.
-        // 2. Prohibir la eliminación si hay usuarios.
-        // 3. Eliminar usuarios en cascada (generalmente no recomendado).
-        // Por ahora, asumimos que la DB manejará la restricción o que no habrá usuarios asociados.
-
         const deletedRows = await Rol.destroy({
-            where: { idRol: req.params.id } // Asumiendo que la PK es idRol
+            where: { id: req.params.id }
         });
 
         if (deletedRows === 0) {
@@ -150,7 +141,7 @@ rolCtrl.deleteRol = async (req, res) => {
         });
     } catch (error) {
         console.error("Error en deleteRol:", error);
-        // Capturar errores específicos de restricción de clave foránea si aplica
+        // Capturar errores específicos de restricción de clave foránea
         if (error.name === 'SequelizeForeignKeyConstraintError') {
             return res.status(400).json({
                 status: "0",
@@ -171,7 +162,11 @@ rolCtrl.getRolFiltro = async (req, res) => {
     #swagger.tags = ['Roles']
     #swagger.summary = 'Filtrar Roles'
     #swagger.description = 'Retorna roles que coinciden con los criterios de filtro (nombre).'
-    #swagger.parameters['nombre'] = { in: 'query', description: 'Filtra por nombre del rol.', type: 'string' }
+    #swagger.parameters['nombre'] = { 
+        in: 'query', 
+        description: 'Filtra por nombre del rol.', 
+        type: 'string' 
+    }
     */
     const query = req.query;
     const criteria = {};

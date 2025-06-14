@@ -1,137 +1,139 @@
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
+/**
+ * Punto de entrada principal de la aplicación
+ * 
+ * Configura Express, carga middlewares y rutas, y arranca el servidor
+ */
 
-//Importar Sequelize y la función de conexión a la DB ---
+const express = require('express');
+const cors = require('cors');
+const session = require('express-session');
+const path = require('path');
+require('dotenv').config(); 
 
-const { sequelize, connectDB } = require("./config/database");
-
-//  Importar TODOS los modelos ---
-
-const Rol = require("./models/Rol");
-const Usuario = require("./models/Usuario");
-const Club = require("./models/Club");
-const Categoria = require("./models/Categoria");
-const Equipo = require("./models/Equipo");
-const Persona = require("./models/Persona");
-const Cobro = require("./models/Cobro");
-const Credencial = require("./models/Credencial");
-
-// --- Asociaciones para Club ---
-Club.hasMany(Persona, {
-  foreignKey: "idClub",
-  sourceKey: "idClub",
-  as: "personas",
-  onDelete: "SET NULL",
-  hooks: true,
-});
-Club.hasMany(Equipo, {
-  foreignKey: "idClub",
-  sourceKey: "idClub",
-  as: "equipos",
-  onDelete: "CASCADE",
-  hooks: true,
-});
-
-// --- Asociaciones para Persona ---
-Persona.belongsTo(Club, {
-  foreignKey: "idClub",
-  targetKey: "idClub",
-  as: "club",
-});
-
-// --- Asociaciones para Equipo ---
-Equipo.belongsTo(Club, {
-  foreignKey: "idClub",
-  targetKey: "idClub",
-  as: "club",
-});
-Equipo.belongsTo(Categoria, {
-  foreignKey: "idCategoria",
-  targetKey: "idCategoria",
-  as: "categoria",
-});
-
-// --- Asociaciones para Categoría ---
-Categoria.hasMany(Equipo, {
-  foreignKey: "idCategoria",
-  sourceKey: "idCategoria",
-  as: "equipos",
-  onDelete: "SET NULL",
-  hooks: true,
-});
-
-// --- Asociaciones para Rol y Usuario ---
-
-if (Usuario && Rol) {
-  Rol.hasMany(Usuario, {
-    foreignKey: "rolId",
-    sourceKey: "id",
-    as: "usuarios",
-    onDelete: "SET NULL",
-    hooks: true,
-  });
-  Usuario.belongsTo(Rol, {
-    foreignKey: "rolId",
-    targetKey: "id",
-    as: "rol",
-  });
-}
-
-// --- Asociaciones para Cobro ---
-
-Cobro.belongsTo(Club, { foreignKey: "idClub" });
-
-// --- Asociaciones para Credencial ---
-
-Credencial.belongsTo(Persona, { foreignKey: "idPersona" });
+// Importar configuraciones y modelos
+const { sequelize, connectDB } = require('./config/database');
+const passport = require('./config/passport');
+const defineAssociations = require('./models/associations');
 
 // --- Inicialización de Express ---
-var app = express();
+const app = express();
 
-// Middlewares
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
-app.use(cors({ origin: "http://localhost:4200" })); //frontend
+// === MIDDLEWARES ===
+// Parseo de JSON y URL encoded
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Configuraciones (setting)
-app.set("port", process.env.PORT || 3000);
+// CORS
+app.use(cors({ 
+    origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
+    credentials: true
+}));
 
-// --- Rutas de API ---
+// Sesiones para autenticación
+app.use(session({
+    secret: process.env.JWT_SECRET || 'tu_clave_secreta_jwt',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000 // 24 horas
+    }
+}));
 
-app.get("/", (req, res) => {
-  res.send("API de la Federación Jujeña de Voley - ¡Todo funciona!");
-});
-app.use("/api/usuario", require("./routes/usuario.routes"));
-app.use("/api/rol", require("./routes/rol.routes"));
-app.use("/api/personas", require("./routes/persona.routes"));
-app.use("/api/clubs", require("./routes/club.routes"));
-app.use("/api/categorias", require("./routes/categoria.routes"));
-app.use("/api/equipos", require("./routes/equipo.routes"));
-app.use("/api/cobro", require("./routes/cobro.routes"));
-app.use("/api/credencial", require("./routes/credencial.routes"));
+// Passport para autenticación
+app.use(passport.initialize());
+app.use(passport.session());
 
-// --- Iniciar el servidor ---
-async function startServer() {
-  try {
-    await connectDB();
-    console.log("✔ Conexión a la base de datos establecida correctamente.");
+// Puerto
+app.set('port', process.env.PORT || 3000);
 
-    await sequelize.sync({ force: false });
-    console.log(
-      "✔ Todos los modelos fueron sincronizados exitosamente con la base de datos."
-    );
-
-    app.listen(app.get("port"), () => {
-      console.log(
-        `🚀 Servidor backend escuchando en http://localhost:${app.get("port")}`
-      );
+// === RUTAS ===
+// La API base
+app.get('/', (req, res) => {
+    res.json({
+        name: 'API de la Federación Jujeña de Voley',
+        version: '1.0.0',
+        status: 'OK'
     });
-  } catch (error) {
-    console.error("❌ Error al conectar o sincronizar con PostgreSQL:", error);
+});
 
-    process.exit(1);
-  }
+// Importante: asegurar que las rutas de autenticación se carguen primero
+app.use('/api/auth', require('./routes/auth.routes'));
+
+// Resto de rutas de la API
+app.use('/api/usuario', require('./routes/usuario.routes'));
+app.use('/api/rol', require('./routes/rol.routes'));
+app.use('/api/personas', require('./routes/persona.routes')); 
+app.use('/api/clubs', require('./routes/club.routes'));
+app.use('/api/categorias', require('./routes/categoria.routes'));
+app.use('/api/equipos', require('./routes/equipo.routes'));
+
+// Middleware para manejo de errores 404 - DEBE SER EL ÚLTIMO
+app.use((req, res, next) => {
+    console.log(`Ruta no encontrada: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({
+        success: false,
+        message: 'Ruta no encontrada',
+        path: req.originalUrl
+    });
+});
+
+// === INICIAR SERVIDOR ===
+async function startServer() {
+    try {
+        // 1. Conectar a la base de datos
+        await connectDB();
+        console.log('✔ Conexión a la base de datos establecida correctamente.');
+        
+        // 2. Definir asociaciones entre modelos
+        defineAssociations();
+        
+        // 3. Sincronizar modelos con la base de datos
+        await sequelize.sync({ force: false });
+        console.log("✔ Todos los modelos fueron sincronizados exitosamente con la base de datos.");
+        
+        // 4. Inicializar datos iniciales si es necesario (roles por defecto, etc.)
+        await initializeDefaultData();
+        
+        // 5. Iniciar el servidor HTTP
+        app.listen(app.get('port'), () => {
+            console.log(`🚀 Servidor backend escuchando en http://localhost:${app.get('port')}`);
+        });
+    } catch (error) {
+        console.error('❌ Error al iniciar el servidor:', error);
+        process.exit(1);
+    }
 }
 
+/**
+ * Inicializa datos por defecto necesarios para el funcionamiento del sistema
+ */
+async function initializeDefaultData() {
+    try {
+        const Rol = require('./models/Rol');
+        
+        // Verificar si ya existen roles
+        const rolesCount = await Rol.count();
+        
+        if (rolesCount === 0) {
+            console.log('Creando roles predeterminados...');
+            
+            // Crear roles básicos
+            await Rol.bulkCreate([
+                { nombre: 'admin', descripcion: 'Administrador del sistema' },
+                { nombre: 'usuario', descripcion: 'Usuario regular' },
+                { nombre: 'usuario_social', descripcion: 'Usuario de redes sociales' }
+            ]);
+            
+            console.log('✓ Roles predeterminados creados correctamente');
+        } else {
+            console.log(`✓ Ya existen ${rolesCount} roles en el sistema`);
+        }
+    } catch (error) {
+        console.error('Error al inicializar datos predeterminados:', error);
+        throw error; // Propagar error para que se maneje en startServer
+    }
+}
+
+// Iniciar el servidor
 startServer();

@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
-const Rol = require('./Rol'); // Importamos el modelo Rol para la relación
-const bcrypt = require('bcryptjs'); // Necesario para hashear contraseñas
+const Rol = require('./Rol');
+const bcrypt = require('bcryptjs');
 
 const Usuario = sequelize.define('Usuario', {
     id: {
@@ -20,37 +20,82 @@ const Usuario = sequelize.define('Usuario', {
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
+        unique: {
+            args: true,
+            msg: 'El email ya está registrado en el sistema'
+        },
         validate: {
-            isEmail: true // Validación para formato de email
+            isEmail: {
+                msg: 'El formato del email no es válido'
+            },
+            notNull: {
+                msg: 'El email es obligatorio'
+            },
+            notEmpty: {
+                msg: 'El email no puede estar vacío'
+            }
         }
     },
     password: {
-        type: DataTypes.STRING, // Aquí almacenaremos el hash de la contraseña
+        type: DataTypes.STRING,
         allowNull: false
+    },
+    // Campos para OAuth - usando field para mapear correctamente a las columnas de la DB
+    googleId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+        field: 'google_id' // Mapeo a la columna google_id
+    },
+    linkedinId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+        field: 'linkedin_id' // Mapeo a la columna linkedin_id
+    },
+    providerType: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        field: 'provider_type' // Mapeo a la columna provider_type
+    },
+    fotoPerfil: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        field: 'foto_perfil' // Mapeo a la columna foto_perfil
+    },
+    emailVerificado: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        field: 'email_verificado' // Mapeo a la columna email_verificado
     }
 }, {
-    tableName: 'usuarios', // Nombre de la tabla en la base de datos
+    tableName: 'usuarios',
     timestamps: true,
+    underscored: true, // Esto indica a Sequelize que use snake_case para nombres de columnas
     hooks: {
-        // Hook (gancho) para hashear la contraseña antes de guardar el usuario
         beforeCreate: async (usuario) => {
             if (usuario.password) {
-                const salt = await bcrypt.genSalt(10); // Genera un "salt" para la encriptación
-                usuario.password = await bcrypt.hash(usuario.password, salt); // Hashea la contraseña
+                const salt = await bcrypt.genSalt(10);
+                usuario.password = await bcrypt.hash(usuario.password, salt);
             }
         },
         beforeUpdate: async (usuario) => {
-            // Solo hashea si la contraseña ha sido modificada
             if (usuario.changed('password')) {
                 const salt = await bcrypt.genSalt(10);
                 usuario.password = await bcrypt.hash(usuario.password, salt);
             }
         }
-    }
+    },
+    indexes: [
+        // Agregamos un índice explícito para mejorar el rendimiento en búsquedas por email
+        {
+            unique: true,
+            fields: ['email']
+        }
+    ]
 });
 
-// Método para comparar contraseñas (útil para el login)
+// Método para comparar contraseñas
 Usuario.prototype.comparePassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
