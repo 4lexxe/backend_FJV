@@ -5,15 +5,45 @@ const { Op } = require('sequelize');
 
 const cobroCtrl = {};
 
+// Función auxiliar para verificar y actualizar cobros vencidos
+async function verificarYActualizarCobrosVencidos(cobros) {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // Normalizar a inicio del día
+    
+    const cobrosDatosFecha = cobros.map(cobro => {
+        const fechaVencimiento = cobro.fechaVencimiento ? new Date(cobro.fechaVencimiento) : null;
+        return {
+            cobro,
+            fechaVencimiento,
+            vencido: fechaVencimiento && fechaVencimiento < hoy && cobro.estado === 'Pendiente'
+        };
+    });
+    
+    // Actualizar estados de cobros vencidos
+    for (const { cobro, vencido } of cobrosDatosFecha) {
+        if (vencido) {
+            await cobro.update({ 
+                estado: 'Vencido',
+                observaciones: cobro.observaciones 
+                    ? `${cobro.observaciones}\nActualizado automáticamente a Vencido por fecha de vencimiento.` 
+                    : 'Actualizado automáticamente a Vencido por fecha de vencimiento.'
+            });
+        }
+    }
+    
+    // Devolver los cobros actualizados
+    return cobrosDatosFecha.map(({ cobro }) => cobro);
+}
+
 // Obtener todos los cobros
 cobroCtrl.getCobros = async (req, res) => {
     /*
     #swagger.tags = ['Cobros']
     #swagger.summary = 'Obtener todos los Cobros'
-    #swagger.description = 'Retorna una lista de todos los cobros registrados, incluyendo información del club y equipo asociados.'
+    #swagger.description = 'Retorna una lista de todos los cobros registrados, incluyendo información del club y equipo asociados. Actualiza automáticamente el estado de los cobros vencidos.'
     */
     try {
-        const cobros = await Cobro.findAll({
+        let cobros = await Cobro.findAll({
             include: [
                 {
                     model: Club,
@@ -28,6 +58,10 @@ cobroCtrl.getCobros = async (req, res) => {
             ],
             order: [['fechaCobro', 'DESC']]
         });
+        
+        // Verificar y actualizar cobros vencidos
+        cobros = await verificarYActualizarCobrosVencidos(cobros);
+        
         res.status(200).json(cobros);
     } catch (error) {
         console.error("Error en getCobros:", error);
@@ -131,7 +165,7 @@ cobroCtrl.getCobro = async (req, res) => {
     #swagger.description = 'Retorna un cobro específico usando su ID, incluyendo información del club y equipo asociados.'
     */
     try {
-        const cobro = await Cobro.findByPk(req.params.id, {
+        let cobro = await Cobro.findByPk(req.params.id, {
             include: [
                 {
                     model: Club,
@@ -150,6 +184,38 @@ cobroCtrl.getCobro = async (req, res) => {
             return res.status(404).json({
                 status: "0",
                 msg: "Cobro no encontrado"
+            });
+        }
+        
+        // Verificar si el cobro está vencido y actualizar estado si es necesario
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        
+        if (cobro.fechaVencimiento && 
+            new Date(cobro.fechaVencimiento) < hoy && 
+            cobro.estado === 'Pendiente') {
+            
+            await cobro.update({ 
+                estado: 'Vencido',
+                observaciones: cobro.observaciones 
+                    ? `${cobro.observaciones}\nActualizado automáticamente a Vencido por fecha de vencimiento.` 
+                    : 'Actualizado automáticamente a Vencido por fecha de vencimiento.'
+            });
+            
+            // Recargar el cobro actualizado
+            cobro = await Cobro.findByPk(req.params.id, {
+                include: [
+                    {
+                        model: Club,
+                        as: 'club',
+                        attributes: ['idClub', 'nombre']
+                    },
+                    {
+                        model: Equipo,
+                        as: 'equipo',
+                        attributes: ['idEquipo', 'nombre']
+                    }
+                ]
             });
         }
         
@@ -308,7 +374,7 @@ cobroCtrl.getCobrosFilter = async (req, res) => {
     }
 
     try {
-        const cobros = await Cobro.findAll({
+        let cobros = await Cobro.findAll({
             where: criteria,
             include: [
                 {
@@ -324,6 +390,9 @@ cobroCtrl.getCobrosFilter = async (req, res) => {
             ],
             order: [['fechaCobro', 'DESC']]
         });
+        
+        // Verificar y actualizar cobros vencidos
+        cobros = await verificarYActualizarCobrosVencidos(cobros);
         
         res.status(200).json(cobros);
     } catch (error) {
@@ -355,7 +424,7 @@ cobroCtrl.getCobrosByClub = async (req, res) => {
             });
         }
         
-        const cobros = await Cobro.findAll({
+        let cobros = await Cobro.findAll({
             where: { idClub },
             include: [
                 {
@@ -371,6 +440,9 @@ cobroCtrl.getCobrosByClub = async (req, res) => {
             ],
             order: [['fechaCobro', 'DESC']]
         });
+        
+        // Verificar y actualizar cobros vencidos
+        cobros = await verificarYActualizarCobrosVencidos(cobros);
         
         res.status(200).json(cobros);
     } catch (error) {
@@ -402,7 +474,7 @@ cobroCtrl.getCobrosByEquipo = async (req, res) => {
             });
         }
         
-        const cobros = await Cobro.findAll({
+        let cobros = await Cobro.findAll({
             where: { idEquipo },
             include: [
                 {
@@ -418,6 +490,9 @@ cobroCtrl.getCobrosByEquipo = async (req, res) => {
             ],
             order: [['fechaCobro', 'DESC']]
         });
+        
+        // Verificar y actualizar cobros vencidos
+        cobros = await verificarYActualizarCobrosVencidos(cobros);
         
         res.status(200).json(cobros);
     } catch (error) {
