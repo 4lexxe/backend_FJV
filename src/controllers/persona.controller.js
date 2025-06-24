@@ -34,19 +34,67 @@ personaCtrl.createPersona = async (req, res) => {
     /*
     #swagger.tags = ['Personas']
     #swagger.summary = 'Crear una nueva Persona'
-    #swagger.description = 'Agrega una nueva persona a la base de datos. Puede incluir idClub para asociarla a un club existente.'
+    #swagger.description = 'Agrega una nueva persona a la base de datos. Puede incluir idClub para asociarla a un club existente y foto de perfil (máximo 4MB).'
     #swagger.parameters['body'] = {
         in: 'body',
         description: 'Datos de la persona a crear.',
         required: true,
-        schema: { $ref: '#/definitions/Persona' } // Asumiendo que has definido 'Persona' en tus definiciones de Swagger
+        schema: { $ref: '#/definitions/Persona' }
     }
     */
     try {
-        const { idClub, ...personaData } = req.body; // Extrae idClub del body
+        console.log('Datos recibidos en req.body:', req.body);
+        console.log('Archivo recibido:', req.file ? 'Sí' : 'No');
+        console.log('Datos de imagen procesados:', req.imageData ? 'Sí' : 'No');
+
+        // Extraer datos del cuerpo de la solicitud
+        const { idClub, ...personaData } = req.body;
+
+        // Validaciones básicas de campos obligatorios
+        if (!personaData.nombreApellido || personaData.nombreApellido.trim() === '') {
+            return res.status(400).json({
+                status: "0",
+                msg: "El nombre y apellido son obligatorios"
+            });
+        }
+
+        if (!personaData.dni || personaData.dni.trim() === '') {
+            return res.status(400).json({
+                status: "0",
+                msg: "El DNI es obligatorio"
+            });
+        }
+
+        if (!personaData.fechaNacimiento || personaData.fechaNacimiento.trim() === '') {
+            return res.status(400).json({
+                status: "0",
+                msg: "La fecha de nacimiento es obligatoria"
+            });
+        }
+
+        // Validar formato de fecha
+        const fechaNacimiento = new Date(personaData.fechaNacimiento);
+        if (isNaN(fechaNacimiento.getTime())) {
+            return res.status(400).json({
+                status: "0",
+                msg: "Formato de fecha de nacimiento inválido. Use YYYY-MM-DD"
+            });
+        }
+
+        // Limpiar datos de cadenas vacías y convertir a null si es necesario
+        Object.keys(personaData).forEach(key => {
+            if (typeof personaData[key] === 'string' && personaData[key].trim() === '') {
+                personaData[key] = null;
+            }
+        });
+
+        // Agregar datos de imagen si se subió una foto
+        if (req.imageData) {
+            Object.assign(personaData, req.imageData);
+        }
 
         // Opcional: Validar que el Club exista si se proporciona idClub
-        if (idClub) {
+        if (idClub && idClub !== '' && idClub !== 'null') {
             const clubExistente = await Club.findByPk(idClub);
             if (!clubExistente) {
                 return res.status(400).json({
@@ -56,11 +104,26 @@ personaCtrl.createPersona = async (req, res) => {
             }
         }
 
-        const persona = await Persona.create({ ...personaData, idClub }); // Pasa idClub al create
+        // Preparar datos finales para crear la persona
+        const datosFinales = {
+            ...personaData,
+            idClub: (idClub && idClub !== '' && idClub !== 'null') ? parseInt(idClub) : null
+        };
+
+        console.log('Datos finales para crear persona:', datosFinales);
+
+        const persona = await Persona.create(datosFinales);
+        
+        // Preparar respuesta sin incluir la imagen base64 completa (por tamaño)
+        const personaResponse = persona.toJSON();
+        if (personaResponse.fotoPerfil) {
+            personaResponse.fotoPerfil = `[IMAGEN_BASE64_${personaResponse.fotoPerfilTamano}_BYTES]`;
+        }
+        
         res.status(201).json({
             status: "1",
-            msg: "Persona guardada.",
-            persona: persona
+            msg: "Persona guardada exitosamente.",
+            persona: personaResponse
         });
     } catch (error) {
         console.error("Error en createPersona:", error);
@@ -69,6 +132,18 @@ personaCtrl.createPersona = async (req, res) => {
                 status: "0",
                 msg: "El DNI o la Licencia FEVA/FJA ya están registrados.",
                 error: error.message
+            });
+        }
+        if (error.name === 'SequelizeValidationError') {
+            const errores = error.errors.map(err => ({
+                campo: err.path,
+                mensaje: err.message,
+                valor: err.value
+            }));
+            return res.status(400).json({
+                status: "0",
+                msg: "Error de validación de datos",
+                errores: errores
             });
         }
         res.status(400).json({
@@ -83,7 +158,7 @@ personaCtrl.getPersona = async (req, res) => {
     /*
     #swagger.tags = ['Personas']
     #swagger.summary = 'Obtener Persona por ID'
-    #swagger.description = 'Retorna una persona específica usando su ID, incluyendo su club asociado.'
+    #swagger.description = 'Retorna una persona específica usando su ID, incluyendo su club asociado y foto de perfil.'
     */
     try {
         const persona = await Persona.findByPk(req.params.id, {
@@ -100,6 +175,7 @@ personaCtrl.getPersona = async (req, res) => {
                 msg: "Persona no encontrada."
             });
         }
+        
         res.status(200).json(persona);
     } catch (error) {
         console.error("Error en getPersona:", error);
@@ -115,7 +191,7 @@ personaCtrl.editPersona = async (req, res) => {
     /*
     #swagger.tags = ['Personas']
     #swagger.summary = 'Actualizar una Persona'
-    #swagger.description = 'Actualiza la información de una persona existente usando su ID. Permite modificar idClub para reasignar a un club.'
+    #swagger.description = 'Actualiza la información de una persona existente usando su ID. Permite modificar idClub para reasignar a un club y actualizar foto de perfil.'
     #swagger.parameters['body'] = {
         in: 'body',
         description: 'Datos de la persona a actualizar.',
@@ -124,10 +200,65 @@ personaCtrl.editPersona = async (req, res) => {
     }
     */
     try {
-        const { idClub, ...personaData } = req.body; // Extrae idClub para validar si se envía
+        console.log('Editando persona - Datos recibidos:', req.body);
+        console.log('Archivo recibido:', req.file ? 'Sí' : 'No');
+
+        // Verificar que la persona existe
+        const personaExistente = await Persona.findByPk(req.params.id);
+        if (!personaExistente) {
+            return res.status(404).json({
+                status: "0",
+                msg: "Persona no encontrada para actualizar."
+            });
+        }
+
+        const { idClub, ...personaData } = req.body;
+
+        // Limpiar datos de cadenas vacías y convertir a null si es necesario
+        Object.keys(personaData).forEach(key => {
+            if (typeof personaData[key] === 'string' && personaData[key].trim() === '') {
+                personaData[key] = null;
+            }
+        });
+
+        // Validaciones básicas solo si se están actualizando
+        if (personaData.hasOwnProperty('nombreApellido') && (!personaData.nombreApellido || personaData.nombreApellido.trim() === '')) {
+            return res.status(400).json({
+                status: "0",
+                msg: "El nombre y apellido no pueden estar vacíos"
+            });
+        }
+
+        if (personaData.hasOwnProperty('dni') && (!personaData.dni || personaData.dni.trim() === '')) {
+            return res.status(400).json({
+                status: "0",
+                msg: "El DNI no puede estar vacío"
+            });
+        }
+
+        if (personaData.hasOwnProperty('fechaNacimiento')) {
+            if (!personaData.fechaNacimiento) {
+                return res.status(400).json({
+                    status: "0",
+                    msg: "La fecha de nacimiento no puede estar vacía"
+                });
+            }
+            const fechaNacimiento = new Date(personaData.fechaNacimiento);
+            if (isNaN(fechaNacimiento.getTime())) {
+                return res.status(400).json({
+                    status: "0",
+                    msg: "Formato de fecha de nacimiento inválido. Use YYYY-MM-DD"
+                });
+            }
+        }
+
+        // Agregar datos de imagen si se subió una nueva foto
+        if (req.imageData) {
+            Object.assign(personaData, req.imageData);
+        }
 
         // Opcional: Validar que el Club exista si se proporciona idClub
-        if (idClub) {
+        if (idClub && idClub !== '' && idClub !== 'null') {
             const clubExistente = await Club.findByPk(idClub);
             if (!clubExistente) {
                 return res.status(400).json({
@@ -137,22 +268,35 @@ personaCtrl.editPersona = async (req, res) => {
             }
         }
 
-        const [updatedRowsCount, updatedPersonas] = await Persona.update({ ...personaData, idClub }, {
-            where: { idPersona: req.params.id }, // **CAMBIADO a idPersona**
-            returning: true // Para PostgreSQL, retorna los registros actualizados
+        // Preparar datos finales para actualizar
+        const datosFinales = {
+            ...personaData,
+            ...(idClub !== undefined && { idClub: (idClub && idClub !== '' && idClub !== 'null') ? parseInt(idClub) : null })
+        };
+
+        console.log('Datos finales para actualizar:', datosFinales);
+
+        await personaExistente.update(datosFinales);
+
+        // Recargar la persona actualizada con sus asociaciones
+        const personaActualizada = await Persona.findByPk(req.params.id, {
+            include: {
+                model: Club,
+                as: 'club',
+                attributes: ['idClub', 'nombre']
+            }
         });
 
-        if (updatedRowsCount === 0) {
-            return res.status(404).json({
-                status: "0",
-                msg: "Persona no encontrada para actualizar."
-            });
+        // Preparar respuesta sin incluir la imagen base64 completa
+        const personaResponse = personaActualizada.toJSON();
+        if (personaResponse.fotoPerfil) {
+            personaResponse.fotoPerfil = `[IMAGEN_BASE64_${personaResponse.fotoPerfilTamano}_BYTES]`;
         }
 
         res.status(200).json({
             status: "1",
-            msg: "Persona actualizada.",
-            persona: updatedPersonas[0]
+            msg: "Persona actualizada exitosamente.",
+            persona: personaResponse
         });
     } catch (error) {
         console.error("Error en editPersona:", error);
@@ -161,6 +305,18 @@ personaCtrl.editPersona = async (req, res) => {
                 status: "0",
                 msg: "El DNI o la Licencia FEVA/FJA ya están registrados en otra persona.",
                 error: error.message
+            });
+        }
+        if (error.name === 'SequelizeValidationError') {
+            const errores = error.errors.map(err => ({
+                campo: err.path,
+                mensaje: err.message,
+                valor: err.value
+            }));
+            return res.status(400).json({
+                status: "0",
+                msg: "Error de validación de datos",
+                errores: errores
             });
         }
         res.status(400).json({
@@ -179,7 +335,7 @@ personaCtrl.deletePersona = async (req, res) => {
     */
     try {
         const deletedRows = await Persona.destroy({
-            where: { idPersona: req.params.id } // **CAMBIADO a idPersona**
+            where: { idPersona: req.params.id }
         });
 
         if (deletedRows === 0) {
@@ -277,6 +433,91 @@ personaCtrl.getPersonaFiltro = async (req, res) => {
         res.status(200).json(personas);
     } catch (error) {
         console.error("Error en getPersonaFiltro:", error);
+        res.status(500).json({
+            status: "0",
+            msg: "Error procesando la operación.",
+            error: error.message
+        });
+    }
+};
+
+// Nuevo endpoint para obtener solo la foto de perfil
+personaCtrl.getFotoPerfil = async (req, res) => {
+    /*
+    #swagger.tags = ['Personas']
+    #swagger.summary = 'Obtener foto de perfil de una Persona'
+    #swagger.description = 'Retorna la foto de perfil de una persona en formato base64.'
+    */
+    try {
+        const persona = await Persona.findByPk(req.params.id, {
+            attributes: ['idPersona', 'nombreApellido', 'fotoPerfil', 'fotoPerfilTipo', 'fotoPerfilTamano']
+        });
+
+        if (!persona) {
+            return res.status(404).json({
+                status: "0",
+                msg: "Persona no encontrada."
+            });
+        }
+
+        if (!persona.fotoPerfil) {
+            return res.status(404).json({
+                status: "0",
+                msg: "Esta persona no tiene foto de perfil."
+            });
+        }
+
+        res.status(200).json({
+            status: "1",
+            msg: "Foto de perfil obtenida exitosamente",
+            foto: {
+                idPersona: persona.idPersona,
+                nombreApellido: persona.nombreApellido,
+                fotoPerfil: persona.fotoPerfil,
+                tipo: persona.fotoPerfilTipo,
+                tamano: persona.fotoPerfilTamano
+            }
+        });
+    } catch (error) {
+        console.error("Error en getFotoPerfil:", error);
+        res.status(500).json({
+            status: "0",
+            msg: "Error procesando la operación.",
+            error: error.message
+        });
+    }
+};
+
+// Nuevo endpoint para eliminar foto de perfil
+personaCtrl.deleteFotoPerfil = async (req, res) => {
+    /*
+    #swagger.tags = ['Personas']
+    #swagger.summary = 'Eliminar foto de perfil de una Persona'
+    #swagger.description = 'Elimina la foto de perfil de una persona específica.'
+    */
+    try {
+        const persona = await Persona.findByPk(req.params.id);
+
+        if (!persona) {
+            return res.status(404).json({
+                status: "0",
+                msg: "Persona no encontrada."
+            });
+        }
+
+        // Actualizar campos relacionados con la foto
+        await persona.update({
+            fotoPerfil: null,
+            fotoPerfilTipo: null,
+            fotoPerfilTamano: null
+        });
+
+        res.status(200).json({
+            status: "1",
+            msg: "Foto de perfil eliminada exitosamente"
+        });
+    } catch (error) {
+        console.error("Error en deleteFotoPerfil:", error);
         res.status(500).json({
             status: "0",
             msg: "Error procesando la operación.",

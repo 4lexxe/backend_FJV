@@ -37,7 +37,6 @@ const Persona = sequelize.define('Persona', {
         type: DataTypes.STRING(50), 
         allowNull: true 
     },
-    
     paseClub: { 
         type: DataTypes.STRING(255), 
         allowNull: true 
@@ -53,6 +52,23 @@ const Persona = sequelize.define('Persona', {
     otorgado: { 
         type: DataTypes.BOOLEAN, 
         defaultValue: false 
+    },
+    // NUEVO: Campo para la foto de perfil
+    fotoPerfil: {
+        type: DataTypes.TEXT, // Usamos TEXT para almacenar la imagen en base64 o ruta del archivo
+        allowNull: true,
+        comment: 'Foto de perfil de la persona (base64 o ruta del archivo)'
+    },
+    // NUEVO: Metadatos de la imagen
+    fotoPerfilTipo: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        comment: 'Tipo MIME de la imagen (image/jpeg, image/png, etc.)'
+    },
+    fotoPerfilTamano: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        comment: 'Tamaño del archivo en bytes'
     },
     idClub: { 
         type: DataTypes.INTEGER,

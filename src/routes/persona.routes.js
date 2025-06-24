@@ -2,6 +2,7 @@
 const personaCtrl = require("../controllers/persona.controller");
 const express = require("express");
 const router = express.Router();
+const { handleUploadErrors, processUploadedImage } = require('../middleware/upload.middleware');
 
 // Ruta para obtener personas con filtros
 router.get("/filter", personaCtrl.getPersonaFiltro);
@@ -9,12 +10,16 @@ router.get("/filter", personaCtrl.getPersonaFiltro);
 // Ruta para obtener todas las personas
 router.get("/", personaCtrl.getPersonas);
 
-// Ruta para crear una nueva persona
-router.post("/", personaCtrl.createPersona);
+// Rutas específicas para fotos de perfil
+router.get("/:id/foto", personaCtrl.getFotoPerfil);
+router.delete("/:id/foto", personaCtrl.deleteFotoPerfil);
+
+// Ruta para crear una nueva persona (con posible foto)
+router.post("/", handleUploadErrors, processUploadedImage, personaCtrl.createPersona);
 
 // Rutas para operaciones por ID (idPersona)
-router.get("/:id", personaCtrl.getPersona);     // El ID en el parámetro de ruta se mapea a idPersona
-router.put("/:id", personaCtrl.editPersona);    // El ID en el parámetro de ruta se mapea a idPersona
-router.delete("/:id", personaCtrl.deletePersona); // El ID en el parámetro de ruta se mapea a idPersona
+router.get("/:id", personaCtrl.getPersona);
+router.put("/:id", handleUploadErrors, processUploadedImage, personaCtrl.editPersona);
+router.delete("/:id", personaCtrl.deletePersona);
 
 module.exports = router;
