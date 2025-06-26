@@ -1,25 +1,26 @@
 // src/routes/persona.routes.js
-const personaCtrl = require("../controllers/persona.controller");
-const express = require("express");
-const router = express.Router();
+const express = require('express');
+const multer = require('multer');
+const personaCtrl = require('../controllers/persona.controller');
 const { handleUploadErrors, processUploadedImage } = require('../middleware/upload.middleware');
 
-// Ruta para obtener personas con filtros
-router.get("/filter", personaCtrl.getPersonaFiltro);
+const router = express.Router();
 
-// Ruta para obtener todas las personas
-router.get("/", personaCtrl.getPersonas);
+// Rutas CRUD para personas
+router.get('/', personaCtrl.getPersonas);
+router.post('/', handleUploadErrors, processUploadedImage, personaCtrl.createPersona);
+router.get('/:id', personaCtrl.getPersona);
+router.put('/:id', handleUploadErrors, processUploadedImage, personaCtrl.editPersona);
+router.delete('/:id', personaCtrl.deletePersona);
+router.get('/filtro/buscar', personaCtrl.getPersonaFiltro);
 
-// Rutas específicas para fotos de perfil
-router.get("/:id/foto", personaCtrl.getFotoPerfil);
-router.delete("/:id/foto", personaCtrl.deleteFotoPerfil);
+// Rutas para manejo de foto de perfil
+router.get('/:id/foto', personaCtrl.getFotoPerfil);
+router.delete('/:id/foto', personaCtrl.deleteFotoPerfil);
 
-// Ruta para crear una nueva persona (con posible foto)
-router.post("/", handleUploadErrors, processUploadedImage, personaCtrl.createPersona);
-
-// Rutas para operaciones por ID (idPersona)
-router.get("/:id", personaCtrl.getPersona);
-router.put("/:id", handleUploadErrors, processUploadedImage, personaCtrl.editPersona);
-router.delete("/:id", personaCtrl.deletePersona);
+// Nuevas rutas para licencias y credenciales
+router.put('/:id/renovar', personaCtrl.renovarLicencia);
+router.post('/actualizar-estado-licencias', personaCtrl.actualizarEstadoLicencias);
+router.get('/licencias/actualizar', personaCtrl.actualizarEstadoLicencias);
 
 module.exports = router;

@@ -31,7 +31,31 @@ const Persona = sequelize.define('Persona', {
     },
     fechaLicencia: { 
         type: DataTypes.DATEONLY, 
-        allowNull: true 
+        allowNull: true,
+        comment: 'Fecha de inicio/alta de la licencia'
+    },
+    // Nuevo campo para fecha de vencimiento/baja de licencia
+    fechaLicenciaBaja: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+        comment: 'Fecha de vencimiento/baja de la licencia (sincronizada con credencial)'
+    },
+    estadoLicencia: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+        defaultValue: 'ACTIVO',
+        comment: 'Estado de la licencia: ACTIVO, INACTIVO, SUSPENDIDO, VENCIDO',
+        validate: {
+            isIn: {
+                args: [['ACTIVO', 'INACTIVO', 'SUSPENDIDO', 'VENCIDO']],
+                msg: "Estado solo puede ser ACTIVO, INACTIVO, SUSPENDIDO o VENCIDO"
+            }
+        }
+    },
+    motivoSuspension: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        comment: 'Motivo de suspensión si el estado de la licencia es SUSPENDIDO'
     },
     tipo: { 
         type: DataTypes.STRING(50), 
@@ -53,13 +77,18 @@ const Persona = sequelize.define('Persona', {
         type: DataTypes.BOOLEAN, 
         defaultValue: false 
     },
-    // NUEVO: Campo para la foto de perfil
+    // Campo actualizado para URL de ImgBB
     fotoPerfil: {
-        type: DataTypes.TEXT, // Usamos TEXT para almacenar la imagen en base64 o ruta del archivo
+        type: DataTypes.STRING(1000), // URL de la imagen en ImgBB
         allowNull: true,
-        comment: 'Foto de perfil de la persona (base64 o ruta del archivo)'
+        comment: 'URL de la foto de perfil en ImgBB'
     },
-    // NUEVO: Metadatos de la imagen
+    // Nuevo campo para URL de eliminación
+    fotoPerfilDeleteUrl: {
+        type: DataTypes.STRING(1000),
+        allowNull: true,
+        comment: 'URL para eliminar la imagen de ImgBB'
+    },
     fotoPerfilTipo: {
         type: DataTypes.STRING(50),
         allowNull: true,

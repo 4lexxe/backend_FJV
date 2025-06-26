@@ -6,6 +6,7 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const imgbbService = require('../services/imgbb.service');
 
 // Crear directorio para uploads si no existe
 const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'profile-photos');
@@ -13,20 +14,8 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Configuración de almacenamiento
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadsDir);
-    },
-    filename: function (req, file, cb) {
-        // Generar nombre único: persona_[id]_[timestamp].[extensión]
-        const timestamp = Date.now();
-        const personaId = req.params.id || 'new';
-        const extension = path.extname(file.originalname);
-        const filename = `persona_${personaId}_${timestamp}${extension}`;
-        cb(null, filename);
-    }
-});
+// Ahora usamos memoria para subir directo a ImgBB sin archivos temporales
+const storage = multer.memoryStorage();
 
 // Filtro para tipos de archivo permitidos
 const fileFilter = (req, file, cb) => {
@@ -102,65 +91,40 @@ const handleUploadErrors = (req, res, next) => {
 };
 
 /**
- * Función para convertir imagen a base64
+ * Middleware para procesar la imagen subida y subirla a ImgBB
  */
-const convertToBase64 = (filePath) => {
-    try {
-        const imageBuffer = fs.readFileSync(filePath);
-        const base64String = imageBuffer.toString('base64');
-        return base64String;
-    } catch (error) {
-        console.error('Error convirtiendo imagen a base64:', error);
-        return null;
-    }
-};
-
-/**
- * Función para eliminar archivo temporal
- */
-const deleteFile = (filePath) => {
-    try {
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
-    } catch (error) {
-        console.error('Error eliminando archivo temporal:', error);
-    }
-};
-
-/**
- * Middleware para procesar la imagen subida y convertirla a base64
- */
-const processUploadedImage = (req, res, next) => {
+const processUploadedImage = async (req, res, next) => {
     // Log para depuración
     console.log('processUploadedImage - req.body:', req.body);
     console.log('processUploadedImage - req.file:', req.file ? 'Archivo presente' : 'Sin archivo');
     
-    if (req.file) {
+    if (req.file && req.file.buffer) {
         try {
-            // Convertir a base64
-            const base64Image = convertToBase64(req.file.path);
+            // Obtener ID para nombrar la imagen
+            const personaId = req.params.id || 'new';
             
-            if (base64Image) {
-                // Agregar datos de la imagen al request
+            // Subir a ImgBB
+            const uploadResult = await imgbbService.uploadProfilePicture(
+                req.file.buffer,
+                personaId
+            );
+            
+            if (uploadResult.success) {
+                // Guardar datos relevantes de la respuesta de ImgBB
                 req.imageData = {
-                    fotoPerfil: base64Image,
-                    fotoPerfilTipo: req.file.mimetype,
-                    fotoPerfilTamano: req.file.size
+                    fotoPerfil: uploadResult.data.url,                   // URL principal
+                    fotoPerfilDeleteUrl: uploadResult.data.delete_url,   // URL para eliminar
+                    fotoPerfilTipo: uploadResult.data.image.mime,        // Tipo MIME
+                    fotoPerfilTamano: parseInt(uploadResult.data.size)   // Tamaño en bytes
                 };
                 
-                console.log('Imagen procesada correctamente, tamaño:', req.file.size);
-                
-                // Eliminar archivo temporal
-                deleteFile(req.file.path);
+                console.log('Imagen subida a ImgBB correctamente:', uploadResult.data.url);
             } else {
-                // Si no se pudo convertir, eliminar archivo y continuar sin imagen
-                deleteFile(req.file.path);
+                console.error('Error al subir imagen a ImgBB:', uploadResult.error);
                 req.imageData = null;
             }
         } catch (error) {
-            console.error('Error procesando imagen:', error);
-            deleteFile(req.file.path);
+            console.error('Error procesando imagen para ImgBB:', error);
             req.imageData = null;
         }
     } else {
@@ -172,9 +136,21 @@ const processUploadedImage = (req, res, next) => {
     next();
 };
 
+/**
+ * Función para eliminar archivo temporal si existe
+ */
+const deleteFile = (filePath) => {
+    try {
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+    } catch (error) {
+        console.error('Error eliminando archivo temporal:', error);
+    }
+};
+
 module.exports = {
     handleUploadErrors,
     processUploadedImage,
-    convertToBase64,
     deleteFile
 };

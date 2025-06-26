@@ -28,6 +28,7 @@
     "passport-oauth2": "^1.8.0",
     "pg": "^8.16.0",
     "pg-hstore": "^2.3.4",
+    "qrcode": "^1.5.4",
     "sequelize": "^6.37.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"

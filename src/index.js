@@ -68,7 +68,7 @@ app.use("/api/clubs", require("./routes/club.routes"));
 app.use("/api/categorias", require("./routes/categoria.routes"));
 app.use("/api/equipos", require("./routes/equipo.routes"));
 app.use("/api/cobros", require("./routes/cobro.routes")); // Añadir nueva ruta de cobros
-app.use("/api/credencial", require("./routes/credencial.routes"));
+app.use("/api/credenciales", require("./routes/credencial.routes")); // Cambiar de singular a plural para que coincida con las solicitudes del frontend
 
 // Middleware para manejo de errores 404 - DEBE SER EL ÚLTIMO
 app.use((req, res, next) => {
