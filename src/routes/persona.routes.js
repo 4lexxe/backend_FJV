@@ -9,20 +9,28 @@ const {
 
 const router = express.Router();
 
-// Nuevas rutas para Estadisticas
+// --- Rutas de Estadísticas ---
+// Deben ir primero para no colisionar con /:id
 router.get("/resumen", personaCtrl.getResumen);
 router.get("/tipo", personaCtrl.getCantidadPorCategoria);
 router.get("/clubes", personaCtrl.getCantidadPorClub);
+router.get("/filtro/buscar", personaCtrl.getPersonaFiltro);
+
+// --- Rutas de Actualización Masiva ---
+router.post(
+  "/actualizar-estado-licencias",
+  personaCtrl.actualizarEstadoLicencias
+);
 
 // Rutas CRUD para personas
 router.get("/", personaCtrl.getPersonas);
+router.get("/:id", personaCtrl.getPersona);
 router.post(
   "/",
   handleUploadErrors,
   processUploadedImage,
   personaCtrl.createPersona
 );
-router.get("/:id", personaCtrl.getPersona);
 router.put(
   "/:id",
   handleUploadErrors,
@@ -30,18 +38,12 @@ router.put(
   personaCtrl.editPersona
 );
 router.delete("/:id", personaCtrl.deletePersona);
-router.get("/filtro/buscar", personaCtrl.getPersonaFiltro);
 
 // Rutas para manejo de foto de perfil
-router.get("/:id/foto", personaCtrl.getFotoPerfil);
+router.get("/:id/foto", personaCtrl.getPersonaFoto);
 router.delete("/:id/foto", personaCtrl.deleteFotoPerfil);
 
-// Nuevas rutas para licencias y credenciales
+// Ruta para licencia individual
 router.put("/:id/renovar", personaCtrl.renovarLicencia);
-router.post(
-  "/actualizar-estado-licencias",
-  personaCtrl.actualizarEstadoLicencias
-);
-router.get("/licencias/actualizar", personaCtrl.actualizarEstadoLicencias);
 
 module.exports = router;
