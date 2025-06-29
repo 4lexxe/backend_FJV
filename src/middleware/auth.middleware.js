@@ -89,7 +89,40 @@ const authorize = (roles) => {
     };
 };
 
+/**
+ * Middleware de autenticación opcional
+ * Si hay token lo verifica, si no, continúa sin usuario
+ */
+const optionalAuthenticate = async (req, res, next) => {
+    try {
+        const token = req.header('Authorization')?.replace('Bearer ', '');
+        
+        if (!token) {
+            // No hay token, continuar sin usuario
+            req.user = null;
+            return next();
+        }
+
+        // Verificar y decodificar el token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'tu_clave_secreta_jwt');
+        
+        // Buscar usuario por ID desde el token
+        const usuario = await Usuario.findByPk(decoded.id, {
+            include: ['rol']
+        });
+
+        // Si el usuario existe, añadirlo a la solicitud
+        req.user = usuario || null;
+        next();
+    } catch (error) {
+        // Si hay error en el token, continuar sin usuario
+        req.user = null;
+        next();
+    }
+};
+
 module.exports = {
     authenticate,
-    authorize
+    authorize,
+    optionalAuthenticate
 };

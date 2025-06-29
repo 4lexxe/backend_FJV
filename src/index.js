@@ -69,6 +69,7 @@ app.use("/api/categorias", require("./routes/categoria.routes"));
 app.use("/api/equipos", require("./routes/equipo.routes"));
 app.use("/api/cobros", require("./routes/cobro.routes")); // Añadir nueva ruta de cobros
 app.use("/api/credenciales", require("./routes/credencial.routes")); // Cambiar de singular a plural para que coincida con las solicitudes del frontend
+app.use("/api/noticias", require("./routes/noticia.routes")); // Nueva ruta para noticias
 
 // Middleware para manejo de errores 404 - DEBE SER EL ÚLTIMO
 app.use((req, res, next) => {
