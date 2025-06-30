@@ -25,42 +25,28 @@ const Persona = sequelize.define('Persona', {
         type: DataTypes.STRING(255), 
         allowNull: true 
     },
-    licenciaFEVA: { 
+    licencia: { 
         type: DataTypes.STRING(50), 
         allowNull: true 
     },
     fechaLicencia: { 
         type: DataTypes.DATEONLY, 
-        allowNull: true,
-        comment: 'Fecha de inicio/alta de la licencia'
+        allowNull: true 
     },
-    // Nuevo campo para fecha de vencimiento/baja de licencia
     fechaLicenciaBaja: {
         type: DataTypes.DATEONLY,
-        allowNull: true,
-        comment: 'Fecha de vencimiento/baja de la licencia (sincronizada con credencial)'
+        allowNull: true
     },
     estadoLicencia: {
-        type: DataTypes.STRING(20),
+        type: DataTypes.STRING(50),
         allowNull: true,
-        defaultValue: 'ACTIVO',
-        comment: 'Estado de la licencia: ACTIVO, INACTIVO, SUSPENDIDO, VENCIDO',
-        validate: {
-            isIn: {
-                args: [['ACTIVO', 'INACTIVO', 'SUSPENDIDO', 'VENCIDO']],
-                msg: "Estado solo puede ser ACTIVO, INACTIVO, SUSPENDIDO o VENCIDO"
-            }
-        }
-    },
-    motivoSuspension: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-        comment: 'Motivo de suspensión si el estado de la licencia es SUSPENDIDO'
+        defaultValue: 'INACTIVO'
     },
     tipo: { 
         type: DataTypes.STRING(50), 
         allowNull: true 
     },
+    
     paseClub: { 
         type: DataTypes.STRING(255), 
         allowNull: true 
@@ -77,28 +63,6 @@ const Persona = sequelize.define('Persona', {
         type: DataTypes.BOOLEAN, 
         defaultValue: false 
     },
-    // Campo actualizado para URL de ImgBB
-    fotoPerfil: {
-        type: DataTypes.STRING(1000), // URL de la imagen en ImgBB
-        allowNull: true,
-        comment: 'URL de la foto de perfil en ImgBB'
-    },
-    // Nuevo campo para URL de eliminación
-    fotoPerfilDeleteUrl: {
-        type: DataTypes.STRING(1000),
-        allowNull: true,
-        comment: 'URL para eliminar la imagen de ImgBB'
-    },
-    fotoPerfilTipo: {
-        type: DataTypes.STRING(50),
-        allowNull: true,
-        comment: 'Tipo MIME de la imagen (image/jpeg, image/png, etc.)'
-    },
-    fotoPerfilTamano: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        comment: 'Tamaño del archivo en bytes'
-    },
     idClub: { 
         type: DataTypes.INTEGER,
         allowNull: true, 
@@ -106,6 +70,10 @@ const Persona = sequelize.define('Persona', {
             model: 'clubs', 
             key: 'idClub'   
         }
+    },
+    foto: {
+        type: DataTypes.STRING, // O DataTypes.TEXT si las URLs son muy largas
+        allowNull: true
     }
 }, {
     tableName: 'personas', 

@@ -11,15 +11,11 @@ const Categoria = sequelize.define('Categoria', {
     nombre: {
         type: DataTypes.STRING(100),
         allowNull: false,
-        unique: true
+        unique: false // Puede haber nombres repetidos en distintos tipos
     },
-    edadMaxima: {
-        type: DataTypes.INTEGER,
-        allowNull: true
-    },
-    edadMinima: {
-        type: DataTypes.INTEGER,
-        allowNull: true
+    tipo: {
+        type: DataTypes.STRING(20),
+        allowNull: false
     }
 }, {
     tableName: 'categorias', 
