@@ -35,4 +35,8 @@ router.put('/:id', authenticate, authorize('admin'), noticiaCtrl.actualizarNotic
 router.delete('/:id', authenticate, authorize('admin'), noticiaCtrl.eliminarNoticia);
 router.patch('/:id/estado', authenticate, authorize('admin'), noticiaCtrl.cambiarEstado);
 
+// 6. Rutas para manejo de vistas de noticias (solo admin)
+router.get('/:id/vistas', authenticate, authorize('admin'), noticiaCtrl.getVistasNoticia);
+router.post('/:id/vista', optionalAuthenticate, noticiaCtrl.registrarVistaNoticia);
+
 module.exports = router;

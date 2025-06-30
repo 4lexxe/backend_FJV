@@ -14,6 +14,7 @@ const Persona = require("./Persona");
 const Cobro = require("./Cobro");
 const Credencial = require("./Credencial");
 const Noticia = require("./Noticia");
+const NoticiaVistas = require("./NoticiaVistas");
 
 /**
  * Define todas las asociaciones entre modelos
@@ -136,6 +137,18 @@ function defineAssociations() {
   Noticia.belongsTo(Usuario, {
     foreignKey: "editorId",
     as: "editor"
+  });
+
+  // Asociar Noticia con NoticiaVistas
+  Noticia.hasMany(NoticiaVistas, {
+    foreignKey: "noticiaId",
+    as: "registrosVistas",
+    onDelete: "CASCADE"
+  });
+
+  NoticiaVistas.belongsTo(Noticia, {
+    foreignKey: "noticiaId",
+    as: "noticia"
   });
 
   console.log("Asociaciones definidas correctamente");
