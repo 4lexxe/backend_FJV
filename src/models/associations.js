@@ -50,6 +50,17 @@ function defineAssociations() {
     as: "club",
   });
 
+  // Relación entre Persona y Credencial (una persona puede tener varias credenciales)
+  Persona.hasMany(Credencial, {
+    foreignKey: "idPersona",
+    as: "credenciales",
+  });
+
+  Credencial.belongsTo(Persona, {
+    foreignKey: "idPersona",
+    as: "persona",
+  });
+
   // --- Asociaciones para Equipo ---
   Equipo.belongsTo(Club, {
     foreignKey: "idClub",
@@ -99,17 +110,6 @@ function defineAssociations() {
   Rol.hasMany(Usuario, {
     foreignKey: "rolId",
     as: "usuarios",
-  });
-
-  // --- Asociaciones para Credencial y Persona ---
-  Persona.hasOne(Credencial, {
-    foreignKey: "idPersona",
-    as: "credencial",
-  });
-
-  Credencial.belongsTo(Persona, {
-    foreignKey: "idPersona",
-    as: "persona",
   });
 
   console.log("Asociaciones definidas correctamente");

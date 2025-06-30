@@ -25,13 +25,22 @@ const Persona = sequelize.define('Persona', {
         type: DataTypes.STRING(255), 
         allowNull: true 
     },
-    licenciaFEVA: { 
+    licencia: { 
         type: DataTypes.STRING(50), 
         allowNull: true 
     },
     fechaLicencia: { 
         type: DataTypes.DATEONLY, 
         allowNull: true 
+    },
+    fechaLicenciaBaja: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+    },
+    estadoLicencia: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        defaultValue: 'INACTIVO'
     },
     tipo: { 
         type: DataTypes.STRING(50), 
@@ -61,6 +70,10 @@ const Persona = sequelize.define('Persona', {
             model: 'clubs', 
             key: 'idClub'   
         }
+    },
+    foto: {
+        type: DataTypes.STRING, // O DataTypes.TEXT si las URLs son muy largas
+        allowNull: true
     }
 }, {
     tableName: 'personas', 
