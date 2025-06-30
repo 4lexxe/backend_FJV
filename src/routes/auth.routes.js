@@ -122,16 +122,6 @@ router.get('/linkedin/callback', (req, res, next) => {
 // RUTAS PROTEGIDAS (REQUIEREN AUTENTICACIÓN)
 //------------------------------------------------------------
 
-router.get('/profile', authenticate, (req, res) => {
-    const userResponse = { ...req.user.toJSON() };
-    // Eliminar datos sensibles
-    delete userResponse.password;
-    delete userResponse.accessToken;
-    delete userResponse.refreshToken;
-    
-    res.json({ user: userResponse });
-});
-
 router.get('/status', (req, res) => {
     res.json({
         authenticated: req.isAuthenticated(),

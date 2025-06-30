@@ -315,4 +315,68 @@ usuarioCtrl.loginUsuario = async (req, res) => {
     }
 };
 
+/**
+ * Obtener el perfil del usuario autenticado
+ */
+usuarioCtrl.getProfile = async (req, res) => {
+    /*
+    #swagger.tags = ['Perfil']
+    #swagger.summary = 'Obtener mi perfil'
+    #swagger.description = 'Retorna la información del perfil del usuario actualmente autenticado.'
+    #swagger.security = [{ "bearerAuth": [] }]
+    */
+    try {
+        // El middleware 'authenticate' ya ha cargado el usuario en req.user.
+        // Sequelize excluye la contraseña por defecto en toJSON, pero lo hacemos explícito por seguridad.
+        const userProfile = req.user.toJSON();
+        delete userProfile.password;
+
+        res.status(200).json(userProfile);
+    } catch (error) {
+        console.error("Error en getProfile:", error);
+        res.status(500).json({
+            status: "0",
+            msg: "Error procesando la operación.",
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Actualizar el perfil del usuario autenticado
+ */
+usuarioCtrl.updateProfile = async (req, res) => {
+    /*
+    #swagger.tags = ['Perfil']
+    #swagger.summary = 'Actualizar mi perfil'
+    #swagger.description = 'Actualiza la información del perfil del usuario autenticado. Puede incluir una foto.'
+    #swagger.security = [{ "bearerAuth": [] }]
+    */
+    try {
+        const userId = req.user.id;
+        const { nombre, apellido, phone, address } = req.body;
+
+        const allowedUpdates = { nombre, apellido, phone };
+
+        // Si se subió una imagen, el middleware 'processUploadedImage' la añade a req.imageData
+        if (req.imageData && req.imageData.fotoPerfil) {
+            allowedUpdates.fotoPerfil = req.imageData.fotoPerfil;
+        }
+
+        // El campo 'address' es un objeto, hay que parsearlo si viene como string desde FormData
+        if (address) {
+            allowedUpdates.address = typeof address === 'string' ? JSON.parse(address) : address;
+        }
+
+        await Usuario.update(allowedUpdates, { where: { id: userId } });
+
+        const usuarioActualizado = await Usuario.findByPk(userId, { attributes: { exclude: ['password'] }, include: ['rol'] });
+
+        res.status(200).json({ status: "1", msg: "Perfil actualizado con éxito.", usuario: usuarioActualizado });
+    } catch (error) {
+        console.error("Error en updateProfile:", error);
+        res.status(500).json({ status: "0", msg: "Error al actualizar el perfil.", error: error.message });
+    }
+};
+
 module.exports = usuarioCtrl;
