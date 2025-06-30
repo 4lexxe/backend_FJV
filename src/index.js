@@ -70,6 +70,10 @@ app.use("/api/equipos", require("./routes/equipo.routes"));
 app.use("/api/cobros", require("./routes/cobro.routes")); // Añadir nueva ruta de cobros
 app.use("/api/credenciales", require("./routes/credencial.routes")); // Cambiar de singular a plural para que coincida con las solicitudes del frontend
 
+// Rutas para mercado pago
+app.use('/api/mp', require('./routes/mp.routes.js'));
+
+
 // Middleware para manejo de errores 404 - DEBE SER EL ÚLTIMO
 app.use((req, res, next) => {
   console.log(`Ruta no encontrada: ${req.method} ${req.originalUrl}`);
