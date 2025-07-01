@@ -27,6 +27,9 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 // CORS - Usar la configuración centralizada
 app.use(cors(corsOptions));
 
+app.use('/api/contacto', require('./routes/contacto.routes'));
+
+
 // Sesiones para autenticación
 app.use(
   session({
