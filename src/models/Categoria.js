@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
+const { sequelize } = require('../config/database'); // Importa la instancia así
 
 const Categoria = sequelize.define('Categoria', {
     idCategoria: {
@@ -14,21 +14,12 @@ const Categoria = sequelize.define('Categoria', {
         unique: true
     },
     tipo: {
-        type: DataTypes.ENUM('afiliado', 'division', 'competencia'),
+        type: DataTypes.ENUM('categoria1', 'categoria2', 'categoria3'),
         allowNull: false
-    },
-    edadMaxima: {
-        type: DataTypes.INTEGER,
-        allowNull: true
-    },
-    edadMinima: {
-        type: DataTypes.INTEGER,
-        allowNull: true
     }
 }, {
-    tableName: 'categorias', 
+    tableName: 'categorias',
     timestamps: true
 });
-
 
 module.exports = Categoria;

@@ -4,13 +4,9 @@ const { Op } = require('sequelize');
 
 const categoriaCtrl = {};
 
+const TIPOS_VALIDOS = ['categoria1', 'categoria2', 'categoria3'];
+
 categoriaCtrl.getCategorias = async (req, res) => {
-    /*
-    #swagger.tags = ['Categorias']
-    #swagger.summary = 'Obtener todas las Categorías'
-    #swagger.description = 'Retorna una lista de todas las categorías registradas, incluyendo los equipos asociados.'
-    #swagger.security = [{ "bearerAuth": [] }]
-    */
     try {
         const categorias = await Categoria.findAll({
             include: {
@@ -34,39 +30,16 @@ categoriaCtrl.getCategorias = async (req, res) => {
 };
 
 categoriaCtrl.createCategoria = async (req, res) => {
-    /*
-    #swagger.tags = ['Categorias']
-    #swagger.summary = 'Crear una nueva Categoría'
-    #swagger.description = 'Agrega una nueva categoría a la base de datos. Solo accesible para administradores.'
-    #swagger.security = [{ "bearerAuth": [] }]
-    #swagger.parameters['body'] = {
-        in: 'body',
-        description: 'Datos de la categoría a crear.',
-        required: true,
-        schema: { $ref: '#/definitions/Categoria' }
-    }
-    */
     try {
-        // Validaciones de datos
-       const { nombre, edadMinima, edadMaxima, tipo } = req.body;
+        const { nombre, tipo } = req.body;
 
-        if (!tipo || !['afiliado', 'division', 'competencia'].includes(tipo)) {
-        return res.status(400).json({
-            status: "0",
-            msg: "El tipo de categoría es obligatorio y debe ser válido (afiliado, division o competencia)"
-        });
-}
-
-        // Validar que edadMinima sea menor o igual a edadMaxima
-        if (edadMinima !== null && edadMaxima !== null && 
-            parseInt(edadMinima) > parseInt(edadMaxima)) {
+        if (!tipo || !TIPOS_VALIDOS.includes(tipo)) {
             return res.status(400).json({
                 status: "0",
-                msg: "La edad mínima no puede ser mayor que la edad máxima"
+                msg: `El tipo de categoría es obligatorio y debe ser válido (${TIPOS_VALIDOS.join(', ')})`
             });
         }
 
-        // Verificar si ya existe una categoría con el mismo nombre
         const categoriaExistente = await Categoria.findOne({ 
             where: { nombre: { [Op.iLike]: nombre } } 
         });
@@ -78,7 +51,7 @@ categoriaCtrl.createCategoria = async (req, res) => {
             });
         }
 
-        const categoria = await Categoria.create(req.body);
+        const categoria = await Categoria.create({ nombre, tipo });
         
         res.status(201).json({
             status: "1",
@@ -103,12 +76,6 @@ categoriaCtrl.createCategoria = async (req, res) => {
 };
 
 categoriaCtrl.getCategoria = async (req, res) => {
-    /*
-    #swagger.tags = ['Categorias']
-    #swagger.summary = 'Obtener Categoría por ID'
-    #swagger.description = 'Retorna una categoría específica usando su ID, incluyendo los equipos asociados.'
-    #swagger.security = [{ "bearerAuth": [] }]
-    */
     try {
         const categoria = await Categoria.findByPk(req.params.id, {
             include: {
@@ -137,42 +104,16 @@ categoriaCtrl.getCategoria = async (req, res) => {
 };
 
 categoriaCtrl.editCategoria = async (req, res) => {
-    /*
-    #swagger.tags = ['Categorias']
-    #swagger.summary = 'Actualizar una Categoría'
-    #swagger.description = 'Actualiza la información de una categoría existente usando su ID. Solo accesible para administradores.'
-    #swagger.security = [{ "bearerAuth": [] }]
-    #swagger.parameters['body'] = {
-        in: 'body',
-        description: 'Datos de la categoría a actualizar.',
-        required: true,
-        schema: { $ref: '#/definitions/Categoria' }
-    }
-    */
     try {
-        // Validaciones de datos
+        const { nombre, tipo } = req.body;
 
-        const { nombre, edadMinima, edadMaxima, tipo } = req.body;
-
-
-        if (!tipo || !['afiliado', 'division', 'competencia'].includes(tipo)) {
-        return res.status(400).json({
-            status: "0",
-            msg: "El tipo de categoría es obligatorio y debe ser válido (afiliado, division o competencia)"
-        });
-}
-
-
-        // Validar que edadMinima sea menor o igual a edadMaxima si ambos se proporcionan
-        if (edadMinima !== null && edadMaxima !== null && 
-            parseInt(edadMinima) > parseInt(edadMaxima)) {
+        if (!tipo || !TIPOS_VALIDOS.includes(tipo)) {
             return res.status(400).json({
                 status: "0",
-                msg: "La edad mínima no puede ser mayor que la edad máxima"
+                msg: `El tipo de categoría es obligatorio y debe ser válido (${TIPOS_VALIDOS.join(', ')})`
             });
         }
 
-        // Verificar si existe la categoría que queremos actualizar
         const categoriaExistente = await Categoria.findByPk(req.params.id);
         if (!categoriaExistente) {
             return res.status(404).json({
@@ -181,7 +122,6 @@ categoriaCtrl.editCategoria = async (req, res) => {
             });
         }
 
-        // Si se cambia el nombre, verificar que no exista otra categoría con ese nombre
         if (nombre && nombre !== categoriaExistente.nombre) {
             const nombreExistente = await Categoria.findOne({ 
                 where: { 
@@ -198,8 +138,7 @@ categoriaCtrl.editCategoria = async (req, res) => {
             }
         }
 
-        // Actualizar la categoría
-        await categoriaExistente.update(req.body);
+        await categoriaExistente.update({ nombre, tipo });
         
         res.status(200).json({
             status: "1",
@@ -224,14 +163,7 @@ categoriaCtrl.editCategoria = async (req, res) => {
 };
 
 categoriaCtrl.deleteCategoria = async (req, res) => {
-    /*
-    #swagger.tags = ['Categorias']
-    #swagger.summary = 'Eliminar una Categoría'
-    #swagger.description = 'Elimina una categoría de la base de datos usando su ID. Solo accesible para administradores.'
-    #swagger.security = [{ "bearerAuth": [] }]
-    */
     try {
-        // Verificar si existen equipos asociados a esta categoría
         const equiposAsociados = await Equipo.count({
             where: { idCategoria: req.params.id }
         });
@@ -243,7 +175,6 @@ categoriaCtrl.deleteCategoria = async (req, res) => {
             });
         }
 
-        // Eliminar la categoría
         const deletedRows = await Categoria.destroy({
             where: { idCategoria: req.params.id }
         });
@@ -277,29 +208,12 @@ categoriaCtrl.deleteCategoria = async (req, res) => {
 };
 
 categoriaCtrl.getCategoriasFiltradas = async (req, res) => {
-    /*
-    #swagger.tags = ['Categorias']
-    #swagger.summary = 'Filtrar Categorías'
-    #swagger.description = 'Retorna categorías que coinciden con los criterios de filtro (nombre, edadMinima, edadMaxima).'
-    #swagger.security = [{ "bearerAuth": [] }]
-    #swagger.parameters['nombre'] = { in: 'query', description: 'Filtra por nombre de la categoría.', type: 'string' }
-    #swagger.parameters['edadMinima'] = { in: 'query', description: 'Filtra por edad mínima (exacta o mayor).', type: 'integer' }
-    #swagger.parameters['edadMaxima'] = { in: 'query', description: 'Filtra por edad máxima (exacta o menor).', type: 'integer' }
-    */
     try {
-        const { nombre, edadMinima, edadMaxima } = req.query;
+        const { nombre } = req.query;
         const criteria = {};
 
         if (nombre) {
             criteria.nombre = { [Op.iLike]: `%${nombre}%` };
-        }
-        
-        if (edadMinima) {
-            criteria.edadMinima = { [Op.gte]: edadMinima };
-        }
-        
-        if (edadMaxima) {
-            criteria.edadMaxima = { [Op.lte]: edadMaxima };
         }
 
         const categorias = await Categoria.findAll({
