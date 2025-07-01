@@ -61,6 +61,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", require("./routes/auth.routes"));
 
 // Resto de rutas de la API
+app.use("/api/profile", require("./routes/profile.routes"));
 app.use("/api/usuario", require("./routes/usuario.routes"));
 app.use("/api/rol", require("./routes/rol.routes"));
 app.use("/api/personas", require("./routes/persona.routes")); // Ahora incluye todas las funcionalidades de afiliados

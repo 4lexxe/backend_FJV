@@ -67,6 +67,17 @@ const Usuario = sequelize.define('Usuario', {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
         field: 'email_verificado' // Mapeo a la columna email_verificado
+    },
+    phone: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        field: 'telefono'
+    },
+    address: {
+        type: DataTypes.JSONB, // O DataTypes.TEXT si no usas PostgreSQL
+        allowNull: true,
+        field: 'direccion',
+        comment: 'Almacena la dirección como un objeto JSON: { street, city, state, zipCode, country }'
     }
 }, {
     tableName: 'usuarios',
