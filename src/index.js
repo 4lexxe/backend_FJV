@@ -77,7 +77,10 @@ app.use("/api/ip-guide", require("./routes/ipGuide.routes.js")); // Ruta alterna
 // Rutas para mercado pago
 app.use("/api/mp", require("./routes/mp.routes.js"));
 
-// Rutas para webhooks (¡Importante que sea accesible sin autenticación!)
+// Rutas para pagos con MercadoPago
+app.use("/api/pagos", require("./routes/pago.routes"));
+
+// Asegurar que las rutas de webhooks estén registradas
 app.use("/api/webhooks", require("./routes/webhook.routes"));
 
 // Middleware para manejo de errores 404 - DEBE SER EL ÚLTIMO
