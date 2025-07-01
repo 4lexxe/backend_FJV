@@ -849,6 +849,137 @@ noticiaCtrl.eliminarImagen = async (req, res) => {
 };
 
 /**
+ * Obtener vistas de una noticia específica (Solo Admin)
+ */
+noticiaCtrl.getVistasNoticia = async (req, res) => {
+    /*
+    #swagger.tags = ['Noticias']
+    #swagger.summary = 'Obtener vistas de noticia'
+    #swagger.description = 'Obtiene el historial de vistas de una noticia específica (solo administradores)'
+    #swagger.security = [{ "bearerAuth": [] }]
+    */
+    try {
+        const { id } = req.params;
+        
+        // Validar que el ID sea un número
+        const idNum = parseInt(id);
+        if (isNaN(idNum)) {
+            return res.status(400).json({
+                status: "0",
+                msg: "El ID de la noticia debe ser un número"
+            });
+        }
+
+        // Verificar que la noticia existe
+        const noticia = await Noticia.findByPk(idNum);
+        if (!noticia) {
+            return res.status(404).json({
+                status: "0",
+                msg: "Noticia no encontrada"
+            });
+        }
+
+        // Obtener todas las vistas de la noticia
+        const vistas = await NoticiaVistas.findAll({
+            where: { noticiaId: idNum },
+            order: [['createdAt', 'DESC']]
+        });
+
+        res.status(200).json({
+            status: "1",
+            noticia: {
+                id: noticia.id,
+                titulo: noticia.titulo,
+                vistas: noticia.vistas
+            },
+            historialVistas: vistas,
+            totalVistas: vistas.length
+        });
+    } catch (error) {
+        console.error("Error en getVistasNoticia:", error);
+        res.status(500).json({
+            status: "0",
+            msg: "Error al obtener las vistas de la noticia",
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Registrar una nueva vista de noticia
+ */
+noticiaCtrl.registrarVistaNoticia = async (req, res) => {
+    /*
+    #swagger.tags = ['Noticias']
+    #swagger.summary = 'Registrar vista de noticia'
+    #swagger.description = 'Registra una nueva vista de noticia desde una IP específica'
+    */
+    try {
+        const { id } = req.params;
+        const ip = req.ip;
+
+        // Validar que el ID sea un número
+        const idNum = parseInt(id);
+        if (isNaN(idNum)) {
+            return res.status(400).json({
+                status: "0",
+                msg: "El ID de la noticia debe ser un número"
+            });
+        }
+
+        // Verificar que la noticia existe y está activa
+        const noticia = await Noticia.findByPk(idNum);
+        if (!noticia) {
+            return res.status(404).json({
+                status: "0",
+                msg: "Noticia no encontrada"
+            });
+        }
+
+        // Solo registrar vista si la noticia está activa o si es admin
+        if (noticia.estado !== 'ACTIVO' && 
+            (!req.user || !req.user.rol || req.user.rol.nombre !== 'admin')) {
+            return res.status(403).json({
+                status: "0",
+                msg: "No tienes permisos para ver esta noticia"
+            });
+        }
+
+        // Verificar si ya existe una vista desde esta IP para esta noticia
+        const vistaExistente = await NoticiaVistas.findOne({
+            where: { noticiaId: idNum, ip }
+        });
+
+        if (!vistaExistente) {
+            // Crear nueva vista
+            await NoticiaVistas.create({ noticiaId: idNum, ip });
+            
+            // Incrementar contador de vistas en la noticia
+            await noticia.increment('vistas');
+            
+            res.status(200).json({
+                status: "1",
+                msg: "Vista registrada exitosamente",
+                nuevaVista: true
+            });
+        } else {
+            res.status(200).json({
+                status: "1",
+                msg: "Vista ya registrada anteriormente",
+                nuevaVista: false
+            });
+        }
+    } catch (error) {
+        console.error("Error en registrarVistaNoticia:", error);
+        res.status(500).json({
+            status: "0",
+            msg: "Error al registrar la vista",
+            error: error.message
+        });
+    }
+};
+
+/**
  * Función auxiliar para validar y procesar bloques de contenido
  */
 async function validarYProcesarBloques(bloques) {
@@ -925,144 +1056,5 @@ function isValidUrl(string) {
         return false;
     }
 }
-
-/**
- * Obtener vistas de una noticia específica (Solo Admin)
- */
-noticiaCtrl.getVistasNoticia = async (req, res) => {
-    /*
-    #swagger.tags = ['Noticias']
-    #swagger.summary = 'Obtener vistas de noticia'
-    #swagger.description = 'Obtiene las vistas registradas de una noticia específica (solo administradores)'
-    #swagger.security = [{ "bearerAuth": [] }]
-    */
-    try {
-        const { id } = req.params;
-        const { limit = 50, page = 1 } = req.query;
-        const offset = (parseInt(page) - 1) * parseInt(limit);
-
-        // Validar que el ID sea un número
-        const idNum = parseInt(id);
-        if (isNaN(idNum)) {
-            return res.status(400).json({
-                status: "0",
-                msg: "El ID de la noticia debe ser un número"
-            });
-        }
-
-        // Verificar que la noticia existe
-        const noticia = await Noticia.findByPk(idNum);
-        if (!noticia) {
-            return res.status(404).json({
-                status: "0",
-                msg: "Noticia no encontrada"
-            });
-        }
-
-        // Obtener vistas con paginación
-        const vistas = await NoticiaVistas.findAndCountAll({
-            where: { noticiaId: idNum },
-            order: [['createdAt', 'DESC']],
-            limit: parseInt(limit),
-            offset: offset
-        });
-
-        res.status(200).json({
-            status: "1",
-            noticia: {
-                id: noticia.id,
-                titulo: noticia.titulo,
-                vistas: noticia.vistas
-            },
-            vistas: vistas.rows,
-            pagination: {
-                totalItems: vistas.count,
-                totalPages: Math.ceil(vistas.count / parseInt(limit)),
-                currentPage: parseInt(page),
-                limit: parseInt(limit)
-            }
-        });
-    } catch (error) {
-        console.error("Error en getVistasNoticia:", error);
-        res.status(500).json({
-            status: "0",
-            msg: "Error al obtener las vistas de la noticia",
-            error: error.message
-        });
-    }
-};
-
-/**
- * Registrar una vista de noticia (Público)
- */
-noticiaCtrl.registrarVistaNoticia = async (req, res) => {
-    /*
-    #swagger.tags = ['Noticias']
-    #swagger.summary = 'Registrar vista de noticia'
-    #swagger.description = 'Registra una vista para una noticia específica (público)'
-    */
-    try {
-        const { id } = req.params;
-        const ip = req.ip;
-
-        // Validar que el ID sea un número
-        const idNum = parseInt(id);
-        if (isNaN(idNum)) {
-            return res.status(400).json({
-                status: "0",
-                msg: "El ID de la noticia debe ser un número"
-            });
-        }
-
-        // Verificar que la noticia existe y está activa
-        const noticia = await Noticia.findByPk(idNum);
-        if (!noticia) {
-            return res.status(404).json({
-                status: "0",
-                msg: "Noticia no encontrada"
-            });
-        }
-
-        // Solo registrar vistas para noticias activas
-        if (noticia.estado !== 'ACTIVO') {
-            return res.status(403).json({
-                status: "0",
-                msg: "No se pueden registrar vistas para noticias no activas"
-            });
-        }
-
-        // Verificar si ya existe una vista desde esta IP
-        const vistaExistente = await NoticiaVistas.findOne({
-            where: { noticiaId: idNum, ip }
-        });
-
-        if (!vistaExistente) {
-            // Crear nueva vista
-            await NoticiaVistas.create({ noticiaId: idNum, ip });
-            
-            // Incrementar contador de vistas en la noticia
-            await noticia.increment('vistas');
-            
-            res.status(200).json({
-                status: "1",
-                msg: "Vista registrada exitosamente",
-                nuevaVista: true
-            });
-        } else {
-            res.status(200).json({
-                status: "1",
-                msg: "Vista ya registrada anteriormente",
-                nuevaVista: false
-            });
-        }
-    } catch (error) {
-        console.error("Error en registrarVistaNoticia:", error);
-        res.status(500).json({
-            status: "0",
-            msg: "Error al registrar la vista",
-            error: error.message
-        });
-    }
-};
 
 module.exports = noticiaCtrl;

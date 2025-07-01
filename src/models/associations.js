@@ -15,6 +15,7 @@ const Cobro = require("./Cobro");
 const Credencial = require("./Credencial");
 const Noticia = require("./Noticia");
 const NoticiaVistas = require("./NoticiaVistas");
+const Pago = require("./Pago");
 
 /**
  * Define todas las asociaciones entre modelos
@@ -101,6 +102,19 @@ function defineAssociations() {
     foreignKey: "idEquipo",
     targetKey: "idEquipo",
     as: "equipo",
+  });
+
+  // Asociación entre Cobro y Pago
+  Cobro.hasMany(Pago, {
+    foreignKey: "idCobro",
+    sourceKey: "idCobro",
+    as: "pagos"
+  });
+
+  Pago.belongsTo(Cobro, {
+    foreignKey: "idCobro",
+    targetKey: "idCobro",
+    as: "cobro"
   });
 
   // --- Asociaciones para Rol y Usuario ---

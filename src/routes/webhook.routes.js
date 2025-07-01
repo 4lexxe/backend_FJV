@@ -1,10 +1,10 @@
 const express = require('express');
-const webhookCtrl = require('../controllers/webhook.controller');
 const router = express.Router();
+const webhookCtrl = require('../controllers/webhook.controller');
 
-// Ruta para recibir las notificaciones de Mercado Pago
-// Es CRUCIAL que esta ruta sea POST y que NO tenga ningún middleware de autenticación (ej. JWT)
-// Mercado Pago no envía tokens de autenticación en sus webhooks.
-router.post('/mercadopago', webhookCtrl.handleMercadoPagoNotification);
+// Webhooks NO DEBEN requerir autenticación
+// MercadoPago no puede enviar tokens de autenticación
+router.post('/mercadopago', webhookCtrl.mercadoPago);
+router.get('/mercadopago', webhookCtrl.mercadoPago); // MercadoPago también envía notificaciones por GET
 
 module.exports = router;
