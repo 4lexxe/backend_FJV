@@ -61,6 +61,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", require("./routes/auth.routes"));
 
 // Resto de rutas de la API
+app.use("/api/profile", require("./routes/profile.routes"));
 app.use("/api/usuario", require("./routes/usuario.routes"));
 app.use("/api/rol", require("./routes/rol.routes"));
 app.use("/api/personas", require("./routes/persona.routes")); // Ahora incluye todas las funcionalidades de afiliados
@@ -69,12 +70,15 @@ app.use("/api/categorias", require("./routes/categoria.routes"));
 app.use("/api/equipos", require("./routes/equipo.routes"));
 app.use("/api/cobros", require("./routes/cobro.routes")); // Añadir nueva ruta de cobros
 app.use("/api/credenciales", require("./routes/credencial.routes")); // Cambiar de singular a plural para que coincida con las solicitudes del frontend
+app.use("/api/noticias", require("./routes/noticia.routes")); // Nueva ruta para noticias
+app.use("/api/ipguide", require("./routes/ipGuideRoutes")); // Rutas para IP Guide API
+app.use("/api/ip-guide", require("./routes/ipGuideRoutes")); // Ruta alternativa con guión para compatibilidad
 
 // Rutas para mercado pago
-app.use('/api/mp', require('./routes/mp.routes.js'));
+app.use("/api/mp", require("./routes/mp.routes.js"));
 
 // Rutas para webhooks (¡Importante que sea accesible sin autenticación!)
-app.use('/api/webhooks', require('./routes/webhook.routes'));
+app.use("/api/webhooks", require("./routes/webhook.routes"));
 
 // Middleware para manejo de errores 404 - DEBE SER EL ÚLTIMO
 app.use((req, res, next) => {

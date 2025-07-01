@@ -13,6 +13,8 @@ const Equipo = require("./Equipo");
 const Persona = require("./Persona");
 const Cobro = require("./Cobro");
 const Credencial = require("./Credencial");
+const Noticia = require("./Noticia");
+const NoticiaVistas = require("./NoticiaVistas");
 
 /**
  * Define todas las asociaciones entre modelos
@@ -110,6 +112,43 @@ function defineAssociations() {
   Rol.hasMany(Usuario, {
     foreignKey: "rolId",
     as: "usuarios",
+  });
+
+  // --- Asociaciones para Noticias ---
+  // Un usuario puede crear muchas noticias (como autor)
+  Usuario.hasMany(Noticia, {
+    foreignKey: "autorId",
+    as: "noticiasCreadas"
+  });
+
+  // Un usuario puede editar muchas noticias (como editor)
+  Usuario.hasMany(Noticia, {
+    foreignKey: "editorId",
+    as: "noticiasEditadas"
+  });
+
+  // Una noticia pertenece a un usuario (autor)
+  Noticia.belongsTo(Usuario, {
+    foreignKey: "autorId",
+    as: "autor"
+  });
+
+  // Una noticia puede tener un editor (usuario que la editó)
+  Noticia.belongsTo(Usuario, {
+    foreignKey: "editorId",
+    as: "editor"
+  });
+
+  // Asociar Noticia con NoticiaVistas
+  Noticia.hasMany(NoticiaVistas, {
+    foreignKey: "noticiaId",
+    as: "registrosVistas",
+    onDelete: "CASCADE"
+  });
+
+  NoticiaVistas.belongsTo(Noticia, {
+    foreignKey: "noticiaId",
+    as: "noticia"
   });
 
   console.log("Asociaciones definidas correctamente");
