@@ -73,6 +73,8 @@ app.use("/api/credenciales", require("./routes/credencial.routes")); // Cambiar 
 // Rutas para mercado pago
 app.use('/api/mp', require('./routes/mp.routes.js'));
 
+// Rutas para webhooks (¡Importante que sea accesible sin autenticación!)
+app.use('/api/webhooks', require('./routes/webhook.routes'));
 
 // Middleware para manejo de errores 404 - DEBE SER EL ÚLTIMO
 app.use((req, res, next) => {
