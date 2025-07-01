@@ -77,6 +77,9 @@ app.use("/api/ip-guide", require("./routes/ipGuideRoutes")); // Ruta alternativa
 // Rutas para mercado pago
 app.use("/api/mp", require("./routes/mp.routes.js"));
 
+// Rutas para webhooks (¡Importante que sea accesible sin autenticación!)
+app.use("/api/webhooks", require("./routes/webhook.routes"));
+
 // Middleware para manejo de errores 404 - DEBE SER EL ÚLTIMO
 app.use((req, res, next) => {
   console.log(`Ruta no encontrada: ${req.method} ${req.originalUrl}`);
