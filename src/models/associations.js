@@ -16,6 +16,8 @@ const Credencial = require("./Credencial");
 const Noticia = require("./Noticia");
 const NoticiaVistas = require("./NoticiaVistas");
 const Pago = require("./Pago");
+const Galeria = require("./Galeria");
+const Imagen = require("./Imagen");
 
 /**
  * Define todas las asociaciones entre modelos
@@ -163,6 +165,32 @@ function defineAssociations() {
   NoticiaVistas.belongsTo(Noticia, {
     foreignKey: "noticiaId",
     as: "noticia"
+  });
+
+  // --- Asociaciones para Galería e Imágenes ---
+  Galeria.hasMany(Imagen, {
+    foreignKey: "idGaleria",
+    sourceKey: "idGaleria",
+    as: "imagenes",
+    onDelete: "CASCADE",
+    hooks: true,
+  });
+
+  Imagen.belongsTo(Galeria, {
+    foreignKey: "idGaleria",
+    targetKey: "idGaleria",
+    as: "galeria",
+  });
+
+  // Asociación entre Usuario y Galería (como autor)
+  Usuario.hasMany(Galeria, {
+    foreignKey: "autorId",
+    as: "galeriasCreadas"
+  });
+
+  Galeria.belongsTo(Usuario, {
+    foreignKey: "autorId",
+    as: "autor"
   });
 
   console.log("Asociaciones definidas correctamente");

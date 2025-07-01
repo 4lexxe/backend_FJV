@@ -74,6 +74,9 @@ app.use("/api/noticias", require("./routes/noticia.routes")); // Nueva ruta para
 app.use("/api/ipguide", require("./routes/ipGuide.routes.js")); // Rutas para IP Guide API
 app.use("/api/ip-guide", require("./routes/ipGuide.routes.js")); // Ruta alternativa con guión para compatibilidad
 
+// Rutas para galerías de imágenes
+app.use("/api/galerias", require("./routes/galeria.routes.js"));
+
 // Rutas para mercado pago
 app.use("/api/mp", require("./routes/mp.routes.js"));
 
