@@ -194,7 +194,7 @@ async function initializeAdminUser() {
       nombre: "Admin",
       apellido: "Sistema",
       email: "admin@sistema.com",
-      password: "Admin123!", // Se hasheará automáticamente por el hook de beforeCreate
+      password: "Admin123!",
       rolId: adminRol.id,
       emailVerificado: true,
     });
@@ -244,7 +244,7 @@ async function initializeRegularUser() {
       nombre: "Usuario",
       apellido: "Regular",
       email: "usuario@sistema.com",
-      password: "Usuario123!", // Se hasheará automáticamente por el hook de beforeCreate
+      password: "Usuario123!",
       rolId: userRol.id,
       emailVerificado: true,
     });

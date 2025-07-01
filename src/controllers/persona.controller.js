@@ -1,6 +1,5 @@
-// src/controllers/persona.controller.js
 const Persona = require("../models/Persona");
-const Club = require("../models/Club"); // Importa el modelo Club para la relación
+const Club = require("../models/Club"); 
 const { Op } = require("sequelize");
 
 const personaCtrl = {};
@@ -15,8 +14,8 @@ personaCtrl.getPersonas = async (req, res) => {
     const personas = await Persona.findAll({
       include: {
         model: Club,
-        as: "club", // Alias definido en Persona.belongsTo(Club) en index.js
-        attributes: ["idClub", "nombre"], // Atributos del club a incluir
+        as: "club", 
+        attributes: ["idClub", "nombre"], 
       },
     });
     res.status(200).json(personas);
@@ -49,7 +48,7 @@ personaCtrl.createPersona = async (req, res) => {
       nombreApellido,
       dni,
       tipo,
-      licencia, // Este campo recibirá 'Feva' o 'FJV'
+      licencia, 
       fechaLicencia,
       ...otrosDatos
     } = req.body;
@@ -73,7 +72,7 @@ personaCtrl.createPersona = async (req, res) => {
       tipo,
       licencia,
       fechaLicencia,
-      ...otrosDatos, // Incluimos cualquier otro dato que pueda venir
+      ...otrosDatos, 
     });
     res.status(201).json({
       status: "1",
@@ -142,7 +141,7 @@ personaCtrl.editPersona = async (req, res) => {
     }
     */
   try {
-    const personaData = req.body; // Usamos el body completo para la actualización
+    const personaData = req.body; 
 
     // Opcional: Validar que el Club exista si se proporciona idClub
     if (personaData.idClub) {
@@ -158,8 +157,8 @@ personaCtrl.editPersona = async (req, res) => {
     const [updatedRowsCount, updatedPersonas] = await Persona.update(
       personaData,
       {
-        where: { idPersona: req.params.id }, // **CAMBIADO a idPersona**
-        returning: true, // Para PostgreSQL, retorna los registros actualizados
+        where: { idPersona: req.params.id }, 
+        returning: true, 
       }
     );
 
@@ -200,7 +199,7 @@ personaCtrl.deletePersona = async (req, res) => {
     */
   try {
     const deletedRows = await Persona.destroy({
-      where: { idPersona: req.params.id }, // **CAMBIADO a idPersona**
+      where: { idPersona: req.params.id }, 
     });
 
     if (deletedRows === 0) {
@@ -262,7 +261,7 @@ personaCtrl.getPersonaFiltro = async (req, res) => {
     criteria.categoria = { [Op.iLike]: `%${query.categoria}%` };
   }
   if (query.idClub) {
-    criteria.idClub = query.idClub; // Se asume que idClub es un número
+    criteria.idClub = query.idClub; 
   }
 
   // Filtros de rango de fechas

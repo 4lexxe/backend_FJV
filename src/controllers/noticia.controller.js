@@ -101,7 +101,7 @@ noticiaCtrl.getNoticia = async (req, res) => {
     */
     try {
         const { id } = req.params;
-        const ip = req.ip; // Obtener la IP del visitante
+        const ip = req.ip; 
 
         // Validar que el ID sea un número
         const idNum = parseInt(id);
@@ -618,7 +618,7 @@ noticiaCtrl.getEstadisticas = async (req, res) => {
             status: "success", 
             msg: "Estadísticas obtenidas correctamente", 
             estadisticas,
-            estadisticasAvanzadas  // Esto es opcional, para futuras ampliaciones
+            estadisticasAvanzadas
         });
     } catch (error) {
         console.error("Error en getEstadisticas:", error);
@@ -687,7 +687,7 @@ noticiaCtrl.buscarPorUrl = async (req, res) => {
                     required: false
                 }
             ],
-            limit: 1 // Solo necesitamos la mejor coincidencia
+            limit: 1 
         });
         
         // Si no se encontró ninguna noticia
@@ -741,12 +741,12 @@ noticiaCtrl.generarSlug = async (req, res) => {
         // Generar slug: convertir a minúsculas, reemplazar caracteres especiales y espacios
         const slug = titulo
             .toLowerCase()
-            .normalize('NFD')  // Normalizar acentos
-            .replace(/[\u0300-\u036f]/g, '') // Eliminar diacríticos
-            .replace(/[^\w\s-]/g, '')  // Eliminar caracteres especiales
-            .replace(/\s+/g, '-')  // Reemplazar espacios con guiones
-            .replace(/-+/g, '-')  // Eliminar múltiples guiones seguidos
-            .trim();  // Eliminar espacios al inicio y final
+            .normalize('NFD')  
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^\w\s-]/g, '') 
+            .replace(/\s+/g, '-') 
+            .replace(/-+/g, '-')  
+            .trim();  
         
         res.status(200).json({
             status: "1",
@@ -1033,7 +1033,7 @@ async function validarYProcesarBloques(bloques) {
                         imagen.alt = imagen.alt || '';
                         imagen.caption = imagen.caption || '';
                     }
-                    bloque.columnas = bloque.columnas || 2; // Por defecto 2 columnas
+                    bloque.columnas = bloque.columnas || 2; 
                     break;
                     
                 default:

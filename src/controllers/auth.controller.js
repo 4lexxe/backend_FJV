@@ -99,8 +99,6 @@ authCtrl.validateToken = (req, res) => {
     res.status(200).json({
         success: true,
         message: "Token válido",
-        // Devolvemos el objeto de usuario completo que ya está en req.user
-        // El middleware ya ha excluido la contraseña
         user: req.user.toJSON()
     });
 };

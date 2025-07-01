@@ -91,7 +91,7 @@ rolCtrl.editRol = async (req, res) => {
     */
     try {
         const [updatedRowsCount, updatedRoles] = await Rol.update(req.body, {
-            where: { id: req.params.id }, // Cambiado de idRol a id según tu modelo
+            where: { id: req.params.id }, 
             returning: true
         });
 

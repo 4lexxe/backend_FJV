@@ -10,8 +10,8 @@ mpCtrl.getPaymentlink = async (req, res) => {
     const { payer_email, items } = req.body;
 
     const body = {
-      payer_email: payer_email, // Usamos el email recibido en el body
-      items: items,             // Usamos los items recibidos en el body
+      payer_email: payer_email, 
+      items: items,             
       back_urls: {
         failure: "http://localhost:4200/failure",
         pending: "http://localhost:4200/pending",
@@ -34,7 +34,7 @@ mpCtrl.getPaymentlink = async (req, res) => {
     return res.status(500).json({
       error: true,
       msg: "Failed to create payment",
-      details: error.response ? error.response.data : error.message // Proporcionar más detalles del error
+      details: error.response ? error.response.data : error.message 
     });
   }
 };

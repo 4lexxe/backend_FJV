@@ -18,7 +18,7 @@ const NoticiaVistas = sequelize.define('NoticiaVistas', {
         onDelete: 'CASCADE'
     },
     ip: {
-        type: DataTypes.STRING(45), // IPv4 o IPv6
+        type: DataTypes.STRING(45), 
         allowNull: false
     }
 }, {

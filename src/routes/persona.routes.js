@@ -1,4 +1,3 @@
-// src/routes/persona.routes.js
 const express = require("express");
 const multer = require("multer");
 const personaCtrl = require("../controllers/persona.controller");
