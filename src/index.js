@@ -71,8 +71,8 @@ app.use("/api/equipos", require("./routes/equipo.routes"));
 app.use("/api/cobros", require("./routes/cobro.routes")); // Añadir nueva ruta de cobros
 app.use("/api/credenciales", require("./routes/credencial.routes")); // Cambiar de singular a plural para que coincida con las solicitudes del frontend
 app.use("/api/noticias", require("./routes/noticia.routes")); // Nueva ruta para noticias
-app.use("/api/ipguide", require("./routes/ipGuideRoutes")); // Rutas para IP Guide API
-app.use("/api/ip-guide", require("./routes/ipGuideRoutes")); // Ruta alternativa con guión para compatibilidad
+app.use("/api/ipguide", require("./routes/ipGuide.routes.js")); // Rutas para IP Guide API
+app.use("/api/ip-guide", require("./routes/ipGuide.routes.js")); // Ruta alternativa con guión para compatibilidad
 
 // Rutas para mercado pago
 app.use("/api/mp", require("./routes/mp.routes.js"));
