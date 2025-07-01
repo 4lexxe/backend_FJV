@@ -48,14 +48,14 @@ categoriaCtrl.createCategoria = async (req, res) => {
     */
     try {
         // Validaciones de datos
-        const { nombre, edadMinima, edadMaxima } = req.body;
-        
-        if (!nombre || nombre.trim() === '') {
-            return res.status(400).json({
-                status: "0",
-                msg: "El nombre de la categoría es obligatorio"
-            });
-        }
+       const { nombre, edadMinima, edadMaxima, tipo } = req.body;
+
+        if (!tipo || !['afiliado', 'division', 'competencia'].includes(tipo)) {
+        return res.status(400).json({
+            status: "0",
+            msg: "El tipo de categoría es obligatorio y debe ser válido (afiliado, division o competencia)"
+        });
+}
 
         // Validar que edadMinima sea menor o igual a edadMaxima
         if (edadMinima !== null && edadMaxima !== null && 
@@ -151,14 +151,17 @@ categoriaCtrl.editCategoria = async (req, res) => {
     */
     try {
         // Validaciones de datos
-        const { nombre, edadMinima, edadMaxima } = req.body;
-        
-        if (nombre && nombre.trim() === '') {
-            return res.status(400).json({
-                status: "0",
-                msg: "El nombre de la categoría no puede estar vacío"
-            });
-        }
+
+        const { nombre, edadMinima, edadMaxima, tipo } = req.body;
+
+
+        if (!tipo || !['afiliado', 'division', 'competencia'].includes(tipo)) {
+        return res.status(400).json({
+            status: "0",
+            msg: "El tipo de categoría es obligatorio y debe ser válido (afiliado, division o competencia)"
+        });
+}
+
 
         // Validar que edadMinima sea menor o igual a edadMaxima si ambos se proporcionan
         if (edadMinima !== null && edadMaxima !== null && 

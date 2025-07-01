@@ -13,6 +13,10 @@ const Categoria = sequelize.define('Categoria', {
         allowNull: false,
         unique: true
     },
+    tipo: {
+        type: DataTypes.ENUM('afiliado', 'division', 'competencia'),
+        allowNull: false
+    },
     edadMaxima: {
         type: DataTypes.INTEGER,
         allowNull: true
@@ -25,5 +29,6 @@ const Categoria = sequelize.define('Categoria', {
     tableName: 'categorias', 
     timestamps: true
 });
+
 
 module.exports = Categoria;
