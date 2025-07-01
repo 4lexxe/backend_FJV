@@ -37,8 +37,8 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 4 * 1024 * 1024, // 4MB en bytes
-        files: 1 // Solo un archivo por vez
+        fileSize: 4 * 1024 * 1024, 
+        files: 1 
     },
     fileFilter: fileFilter
 });
@@ -112,10 +112,10 @@ const processUploadedImage = async (req, res, next) => {
             if (uploadResult.success) {
                 // Guardar datos relevantes de la respuesta de ImgBB
                 req.imageData = {
-                    fotoPerfil: uploadResult.data.url,                   // URL principal
-                    fotoPerfilDeleteUrl: uploadResult.data.delete_url,   // URL para eliminar
-                    fotoPerfilTipo: uploadResult.data.image.mime,        // Tipo MIME
-                    fotoPerfilTamano: parseInt(uploadResult.data.size)   // Tamaño en bytes
+                    fotoPerfil: uploadResult.data.url,                   
+                    fotoPerfilDeleteUrl: uploadResult.data.delete_url,  
+                    fotoPerfilTipo: uploadResult.data.image.mime,        
+                    fotoPerfilTamano: parseInt(uploadResult.data.size)   
                 };
                 
                 console.log('Imagen subida a ImgBB correctamente:', uploadResult.data.url);

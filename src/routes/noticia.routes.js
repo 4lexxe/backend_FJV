@@ -19,7 +19,7 @@ router.post('/delete-image', authenticate, authorize('admin'), noticiaCtrl.elimi
 
 // 2. Rutas específicas y estáticas (sin parámetros variables)
 router.get('/categorias', noticiaCtrl.getCategorias);
-router.get('/estadisticas', authenticate, authorize('admin'), noticiaCtrl.getEstadisticas); // Cambiado de /admin/estadisticas a /estadisticas para evitar confusiones
+router.get('/estadisticas', authenticate, authorize('admin'), noticiaCtrl.getEstadisticas); 
 router.get('/buscar-url', optionalAuthenticate, noticiaCtrl.buscarPorUrl);
 router.get('/generar-slug', noticiaCtrl.generarSlug);
 

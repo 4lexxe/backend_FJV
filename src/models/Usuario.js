@@ -56,17 +56,18 @@ const Usuario = sequelize.define('Usuario', {
     providerType: {
         type: DataTypes.STRING,
         allowNull: true,
-        field: 'provider_type' // Mapeo a la columna provider_type
+        field: 'provider_type'
     },
     fotoPerfil: {
         type: DataTypes.STRING,
         allowNull: true,
-        field: 'foto_perfil' // Mapeo a la columna foto_perfil
+        field: 'foto_perfil' 
+        
     },
     emailVerificado: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
-        field: 'email_verificado' // Mapeo a la columna email_verificado
+        field: 'email_verificado' 
     },
     phone: {
         type: DataTypes.STRING,
@@ -74,7 +75,7 @@ const Usuario = sequelize.define('Usuario', {
         field: 'telefono'
     },
     address: {
-        type: DataTypes.JSONB, // O DataTypes.TEXT si no usas PostgreSQL
+        type: DataTypes.JSONB,
         allowNull: true,
         field: 'direccion',
         comment: 'Almacena la dirección como un objeto JSON: { street, city, state, zipCode, country }'
@@ -82,7 +83,7 @@ const Usuario = sequelize.define('Usuario', {
 }, {
     tableName: 'usuarios',
     timestamps: true,
-    underscored: true, // Esto indica a Sequelize que use snake_case para nombres de columnas
+    underscored: true, 
     hooks: {
         beforeCreate: async (usuario) => {
             if (usuario.password) {
@@ -98,7 +99,6 @@ const Usuario = sequelize.define('Usuario', {
         }
     },
     indexes: [
-        // Agregamos un índice explícito para mejorar el rendimiento en búsquedas por email
         {
             unique: true,
             fields: ['email']

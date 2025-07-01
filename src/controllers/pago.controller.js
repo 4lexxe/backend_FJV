@@ -77,7 +77,7 @@ pagoCtrl.iniciarPago = async (req, res) => {
         // Preparar datos para la preferencia de pago en producción
         const datosCobro = {
             id: cobro.idCobro,
-            concepto: `${cobro.concepto}`.substring(0, 250), // Truncar para evitar errores
+            concepto: `${cobro.concepto}`.substring(0, 250), 
             monto: cobro.monto,
             idClub: cobro.idClub,
             idEquipo: cobro.idEquipo,

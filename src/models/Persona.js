@@ -15,7 +15,7 @@ const Persona = sequelize.define('Persona', {
     dni: { 
         type: DataTypes.STRING(20), 
         allowNull: false, 
-        unique: true // DNI único
+        unique: true 
     },
     fechaNacimiento: { 
         type: DataTypes.DATEONLY, 
@@ -72,7 +72,7 @@ const Persona = sequelize.define('Persona', {
         }
     },
     foto: {
-        type: DataTypes.STRING, // O DataTypes.TEXT si las URLs son muy largas
+        type: DataTypes.STRING, 
         allowNull: true
     }
 }, {

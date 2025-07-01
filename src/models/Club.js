@@ -38,7 +38,7 @@ const Club = sequelize.define('Club', {
         allowNull: false
     },
     estadoAfiliacion: {
-        type: DataTypes.STRING(50), // Ej: 'Activo', 'Inactivo', 'Suspendido'
+        type: DataTypes.STRING(50), 
         allowNull: false
     }
 }, {

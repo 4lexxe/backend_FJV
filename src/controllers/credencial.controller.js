@@ -241,7 +241,7 @@ credencialCtrl.getCredencialesPorPersona = async (req, res) => {
         
         const credenciales = await Credencial.findAll({
             where: { idPersona },
-            order: [['fechaAlta', 'DESC']] // Ordenar por fecha de alta, más recientes primero
+            order: [['fechaAlta', 'DESC']] 
         });
         
         res.status(200).json({
@@ -855,7 +855,7 @@ credencialCtrl.validarCredencial = async (req, res) => {
         } else if (credencial.estado === 'INACTIVO' && fechaVencimiento >= fechaActual) {
             // La credencial no ha expirado pero aparece como inactiva
             await credencial.update({ estado: 'ACTIVO' });
-            credencial.estado = 'ACTIVO'; // Actualizar el objeto en memoria
+            credencial.estado = 'ACTIVO';
             
             // Actualizar también el estado de licencia de la persona
             if (credencial.persona) {

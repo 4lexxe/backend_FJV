@@ -38,7 +38,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000, // 24 horas
+      maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
@@ -67,15 +67,15 @@ app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/profile", require("./routes/profile.routes"));
 app.use("/api/usuario", require("./routes/usuario.routes"));
 app.use("/api/rol", require("./routes/rol.routes"));
-app.use("/api/personas", require("./routes/persona.routes")); // Ahora incluye todas las funcionalidades de afiliados
+app.use("/api/personas", require("./routes/persona.routes")); 
 app.use("/api/clubs", require("./routes/club.routes"));
 app.use("/api/categorias", require("./routes/categoria.routes"));
 app.use("/api/equipos", require("./routes/equipo.routes"));
-app.use("/api/cobros", require("./routes/cobro.routes")); // Añadir nueva ruta de cobros
-app.use("/api/credenciales", require("./routes/credencial.routes")); // Cambiar de singular a plural para que coincida con las solicitudes del frontend
-app.use("/api/noticias", require("./routes/noticia.routes")); // Nueva ruta para noticias
-app.use("/api/ipguide", require("./routes/ipGuide.routes.js")); // Rutas para IP Guide API
-app.use("/api/ip-guide", require("./routes/ipGuide.routes.js")); // Ruta alternativa con guión para compatibilidad
+app.use("/api/cobros", require("./routes/cobro.routes")); 
+app.use("/api/credenciales", require("./routes/credencial.routes")); 
+app.use("/api/noticias", require("./routes/noticia.routes")); 
+app.use("/api/ipguide", require("./routes/ipGuide.routes.js")); 
+app.use("/api/ip-guide", require("./routes/ipGuide.routes.js")); 
 
 // Rutas para mercado pago
 app.use("/api/mp", require("./routes/mp.routes.js"));
@@ -197,7 +197,7 @@ async function initializeAdminUser() {
       nombre: "Admin",
       apellido: "Sistema",
       email: "admin@sistema.com",
-      password: "Admin123!", // Se hasheará automáticamente por el hook de beforeCreate
+      password: "Admin123!",
       rolId: adminRol.id,
       emailVerificado: true,
     });
@@ -247,7 +247,7 @@ async function initializeRegularUser() {
       nombre: "Usuario",
       apellido: "Regular",
       email: "usuario@sistema.com",
-      password: "Usuario123!", // Se hasheará automáticamente por el hook de beforeCreate
+      password: "Usuario123!",
       rolId: userRol.id,
       emailVerificado: true,
     });

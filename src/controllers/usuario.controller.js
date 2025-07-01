@@ -1,6 +1,6 @@
 const Usuario = require("../models/Usuario");
-const Rol = require("../models/Rol"); // Para incluir el rol en las respuestas
-const { Op } = require('sequelize'); // Para los operadores de Sequelize
+const Rol = require("../models/Rol");
+const { Op } = require('sequelize'); 
 
 const usuarioCtrl = {};
 
@@ -15,9 +15,9 @@ usuarioCtrl.getUsuarios = async (req, res) => {
             include: [{
                 model: Rol,
                 as: 'rol',
-                attributes: ['id', 'nombre', 'descripcion'] // Incluir solo los campos necesarios del rol
+                attributes: ['id', 'nombre', 'descripcion'] 
             }],
-            attributes: { exclude: ['password'] } // Excluir el campo password para seguridad
+            attributes: { exclude: ['password'] } 
         });
         res.status(200).json(usuarios);
     } catch (error) {
@@ -110,7 +110,7 @@ usuarioCtrl.getUsuario = async (req, res) => {
                 as: 'rol',
                 attributes: ['id', 'nombre', 'descripcion']
             }],
-            attributes: { exclude: ['password'] } // Excluir la contraseña
+            attributes: { exclude: ['password'] } 
         });
 
         if (!usuario) {
@@ -145,7 +145,7 @@ usuarioCtrl.editUsuario = async (req, res) => {
     try {
         const [updatedRowsCount, updatedUsuarios] = await Usuario.update(req.body, {
             where: { id: req.params.id },
-            returning: true // Para PostgreSQL, retorna los registros actualizados
+            returning: true 
         });
 
         if (updatedRowsCount === 0) {
@@ -236,7 +236,7 @@ usuarioCtrl.getUsuarioFiltro = async (req, res) => {
                 as: 'rol',
                 attributes: ['id', 'nombre', 'descripcion']
             }],
-            attributes: { exclude: ['password'] } // Excluir la contraseña
+            attributes: { exclude: ['password'] } 
         });
         res.status(200).json(usuarios);
     } catch (error) {

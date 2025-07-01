@@ -13,17 +13,17 @@ const MercadoPagoNotification = sequelize.define(
     resource_id: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: "uniqueNotification", // Para asegurar que no haya duplicados si Mercado Pago envía la misma notificación
+      unique: "uniqueNotification", 
     },
     // Tipo de notificación (payment, preapproval, merchant_order, etc.)
     topic: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: "uniqueNotification", // Parte de la clave única
+      unique: "uniqueNotification", 
     },
     // ID del usuario que generó la notificación
     user_id: {
-      type: DataTypes.BIGINT, // Puede ser un número grande
+      type: DataTypes.BIGINT, 
       allowNull: true,
     },
     // ID de la aplicación
@@ -53,7 +53,7 @@ const MercadoPagoNotification = sequelize.define(
     },
     // Guarda el cuerpo RAW completo de la notificación para depuración
     raw_payload: {
-      type: DataTypes.JSONB, // JSONB para PostgreSQL es eficiente para JSON
+      type: DataTypes.JSONB, 
       allowNull: true,
     },
     // ID de la transacción asociado (si es un pago)
@@ -61,15 +61,15 @@ const MercadoPagoNotification = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
-     payment_status: { // Estado del recurso (ej. 'approved', 'pending', 'rejected' para pagos)
+     payment_status: { 
         type: DataTypes.STRING,
-        allowNull: true, // Puede ser nulo si no es un tipo de notificación de pago o si falla la consulta
+        allowNull: true, 
     },
   },
   {
     // Opciones del modelo
-    tableName: "mercadoPago_notifications", // Nombre de la tabla en la base de datos
-    timestamps: true, // `createdAt` y `updatedAt` automáticamente
+    tableName: "mercadoPago_notifications", 
+    timestamps: true, 
     indexes: [
       {
         unique: true,
