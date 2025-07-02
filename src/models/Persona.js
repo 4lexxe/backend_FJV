@@ -43,8 +43,10 @@ const Persona = sequelize.define('Persona', {
         defaultValue: 'INACTIVO'
     },
     tipo: { 
-        type: DataTypes.STRING(50), 
-        allowNull: true 
+        type: DataTypes.ARRAY(DataTypes.STRING), 
+        allowNull: true,
+        defaultValue: [],
+        comment: 'Roles del afiliado: Jugador, Entrenador, etc.' 
     },
     
     paseClub: { 

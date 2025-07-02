@@ -107,7 +107,7 @@ async function startServer() {
     defineAssociations();
 
     // 3. Sincronizar modelos con la base de datos
-    await sequelize.sync({ force: false });
+    await sequelize.sync({ force: true });
     console.log(
       "✔ Todos los modelos fueron sincronizados exitosamente con la base de datos."
     );

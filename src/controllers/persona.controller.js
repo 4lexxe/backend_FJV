@@ -1,6 +1,7 @@
 const Persona = require("../models/Persona");
 const Club = require("../models/Club"); 
 const { Op } = require("sequelize");
+const { sequelize } = require('../config/database');
 
 const personaCtrl = {};
 
@@ -245,7 +246,7 @@ personaCtrl.getPersonaFiltro = async (req, res) => {
     criteria.dni = { [Op.iLike]: `%${query.dni}%` };
   }
   if (query.tipo) {
-    criteria.tipo = { [Op.iLike]: `%${query.tipo}%` };
+    criteria.tipo = { [Op.contains]: [query.tipo] };
   }
   if (query.categoria) {
     criteria.categoria = { [Op.iLike]: `%${query.categoria}%` };
@@ -462,21 +463,16 @@ personaCtrl.getCantidadPorCategoria = async (req, res) => {
     #swagger.summary = 'Obtener cantidad de afiliados por tipo'
     */
   try {
-    const cantidadPorTipo = await Persona.findAll({
-      attributes: [
-        "tipo",
-        [
-          Persona.sequelize.fn("COUNT", Persona.sequelize.col("tipo")),
-          "cantidad",
-        ],
-      ],
-      group: ["tipo"],
-      order: [
-        [Persona.sequelize.fn("COUNT", Persona.sequelize.col("tipo")), "DESC"],
-      ],
-    });
+    const cantidadPorTipo = await sequelize.query(
+      `SELECT tipo_individual as tipo, COUNT(*) as cantidad
+       FROM (SELECT unnest(tipo) as tipo_individual FROM personas WHERE tipo IS NOT NULL) as unnested_tipos
+       GROUP BY tipo_individual
+       ORDER BY cantidad DESC`,
+      { type: sequelize.QueryTypes.SELECT }
+    );
     res.status(200).json(cantidadPorTipo);
   } catch (error) {
+    console.error("Error en getCantidadPorCategoria:", error);
     res.status(500).json({
       msg: "Error al obtener cantidad por tipo",
       error: error.message,
