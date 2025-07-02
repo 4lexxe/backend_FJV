@@ -41,7 +41,8 @@ clubCtrl.createClub = async (req, res) => {
     /*
     #swagger.tags = ['Clubes']
     #swagger.summary = 'Crear un nuevo Club'
-    #swagger.description = 'Agrega un nuevo club a la base de datos.'
+    #swagger.description = 'Agrega un nuevo club a la base de datos. Solo accesible para administradores.'
+    #swagger.security = [{ "bearerAuth": [] }]
     #swagger.parameters['body'] = {
         in: 'body',
         description: 'Datos del club a crear.',
@@ -50,10 +51,36 @@ clubCtrl.createClub = async (req, res) => {
     }
     */
     try {
-        const club = await Club.create(req.body);
+        console.log("Datos recibidos para creación:", req.body);
+
+        // Verificar si req.body existe y no está vacío
+        if (!req.body || Object.keys(req.body).length === 0) {
+            return res.status(400).json({
+                status: "0",
+                msg: "No se recibieron datos para crear el club."
+            });
+        }
+
+        // Crear un objeto solo con los campos permitidos para evitar errores
+        const createData = {};
+        const allowedFields = [
+            'nombre', 'direccion', 'telefono', 'email', 
+            'cuit', 'fechaAfiliacion', 'estadoAfiliacion', 'logo'
+        ];
+        
+        // Solo incluir campos que están presentes en req.body y están permitidos
+        allowedFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                createData[field] = req.body[field];
+            }
+        });
+        
+        console.log("Datos a crear:", createData);
+
+        const club = await Club.create(createData);
         res.status(201).json({
             status: "1",
-            msg: "Club guardado.",
+            msg: "Club creado exitosamente",
             club: club
         });
     } catch (error) {
@@ -116,7 +143,8 @@ clubCtrl.editClub = async (req, res) => {
     /*
     #swagger.tags = ['Clubes']
     #swagger.summary = 'Actualizar un Club'
-    #swagger.description = 'Actualiza la información de un club existente usando su ID.'
+    #swagger.description = 'Actualiza la información de un club existente usando su ID. Solo accesible para administradores.'
+    #swagger.security = [{ "bearerAuth": [] }]
     #swagger.parameters['body'] = {
         in: 'body',
         description: 'Datos del club a actualizar.',
@@ -125,22 +153,48 @@ clubCtrl.editClub = async (req, res) => {
     }
     */
     try {
-        const [updatedRowsCount, updatedClubs] = await Club.update(req.body, {
-            where: { idClub: req.params.id },
-            returning: true
-        });
-
-        if (updatedRowsCount === 0) {
-            return res.status(404).json({
+        console.log("Datos recibidos para actualización:", req.body);
+        
+        // Verificar si req.body existe y no está vacío
+        if (!req.body || Object.keys(req.body).length === 0) {
+            return res.status(400).json({
                 status: "0",
-                msg: "Club no encontrado para actualizar."
+                msg: "No se recibieron datos para actualizar el club."
             });
         }
 
+        // Verificar si el club existe
+        const clubExistente = await Club.findByPk(req.params.id);
+        if (!clubExistente) {
+            return res.status(404).json({
+                status: "0",
+                msg: "Club no encontrado para actualizar"
+            });
+        }
+
+        // Crear un objeto solo con los campos permitidos para evitar errores
+        const updateData = {};
+        const allowedFields = [
+            'nombre', 'direccion', 'telefono', 'email', 
+            'cuit', 'fechaAfiliacion', 'estadoAfiliacion', 'logo'
+        ];
+        
+        // Solo incluir campos que están presentes en req.body y están permitidos
+        allowedFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                updateData[field] = req.body[field];
+            }
+        });
+        
+        console.log("Datos a actualizar:", updateData);
+
+        // Actualizar el club solo con los campos permitidos
+        await clubExistente.update(updateData);
+
         res.status(200).json({
             status: "1",
-            msg: "Club actualizado.",
-            club: updatedClubs[0]
+            msg: "Club actualizado exitosamente",
+            club: clubExistente
         });
     } catch (error) {
         console.error("Error en editClub:", error);

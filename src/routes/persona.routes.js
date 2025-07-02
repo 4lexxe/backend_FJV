@@ -1,10 +1,11 @@
 const express = require("express");
-const multer = require("multer");
 const personaCtrl = require("../controllers/persona.controller");
-const {
-  handleUploadErrors,
-  processUploadedImage,
-} = require("../middleware/upload.middleware");
+const { 
+    extractBase64Fields,
+    handleUploadErrors, 
+    processUploadedImage 
+} = require("../middleware/upload-persona.middleware");
+const { authenticate, authorize, optionalAuthenticate } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
@@ -18,24 +19,33 @@ router.get("/filtro/buscar", personaCtrl.getPersonaFiltro);
 // --- Rutas de Actualización Masiva ---
 router.post(
   "/actualizar-estado-licencias",
+  authenticate,
+  authorize('admin'),
   personaCtrl.actualizarEstadoLicencias
 );
 
 // Rutas CRUD para personas
 router.get("/", personaCtrl.getPersonas);
 router.get("/:id", personaCtrl.getPersona);
+
+// Crear persona con manejo de foto
 router.post(
   "/",
+  extractBase64Fields, // Nuevo middleware para extraer campos base64
   handleUploadErrors,
   processUploadedImage,
   personaCtrl.createPersona
 );
+
+// Actualizar persona con manejo de foto
 router.put(
   "/:id",
+  extractBase64Fields, // Nuevo middleware para extraer campos base64
   handleUploadErrors,
   processUploadedImage,
   personaCtrl.editPersona
 );
+
 router.delete("/:id", personaCtrl.deletePersona);
 
 // Rutas para manejo de foto de perfil

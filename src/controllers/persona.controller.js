@@ -42,55 +42,40 @@ personaCtrl.createPersona = async (req, res) => {
     }
     */
   try {
-    // Extraemos TODOS los campos esperados del body para mayor claridad y seguridad.
-    const {
-      idClub,
-      nombreApellido,
-      dni,
-      tipo,
-      licencia, 
-      fechaLicencia,
-      ...otrosDatos
-    } = req.body;
+    console.log("Creando nueva persona con datos:", req.body);
 
-    // Opcional: Validar que el Club exista si se proporciona idClub
-    if (idClub) {
-      const clubExistente = await Club.findByPk(idClub);
-      if (!clubExistente) {
-        return res.status(400).json({
-          status: "0",
-          msg: `El Club con ID ${idClub} no existe.`,
-        });
-      }
-    }
+    // A estas alturas, si había una foto, el middleware ya la procesó
+    // y la URL de la imagen está en req.body.foto
 
-    // Creamos el objeto persona con los campos explícitos.
-    const persona = await Persona.create({
-      idClub,
-      nombreApellido,
-      dni,
-      tipo,
-      licencia,
-      fechaLicencia,
-      ...otrosDatos, 
-    });
+    // Crear persona con los datos proporcionados (incluida la foto ya procesada)
+    const persona = await Persona.create(req.body);
+
     res.status(201).json({
       status: "1",
-      msg: "Persona guardada.",
-      persona: persona,
+      msg: "Persona registrada con éxito",
+      persona,
     });
   } catch (error) {
     console.error("Error en createPersona:", error);
-    if (error.name === "SequelizeUniqueConstraintError") {
-      return res.status(409).json({
+
+    // Manejo específico de errores de validación
+    if (
+      error.name === "SequelizeValidationError" ||
+      error.name === "SequelizeUniqueConstraintError"
+    ) {
+      return res.status(400).json({
         status: "0",
-        msg: "El DNI o la Licencia FEVA/FJA ya están registrados.",
-        error: error.message,
+        msg: "Error de validación",
+        errors: error.errors.map((e) => ({
+          field: e.path,
+          message: e.message,
+        })),
       });
     }
-    res.status(400).json({
+
+    res.status(500).json({
       status: "0",
-      msg: "Error procesando operación.",
+      msg: "Error al guardar persona",
       error: error.message,
     });
   }
@@ -141,6 +126,11 @@ personaCtrl.editPersona = async (req, res) => {
     }
     */
   try {
+    console.log("Editando persona ID:", req.params.id, "con datos:", req.body);
+
+    // A estas alturas, si había una foto, el middleware ya la procesó
+    // y la URL de la imagen está en req.body.foto
+
     const personaData = req.body; 
 
     // Opcional: Validar que el Club exista si se proporciona idClub

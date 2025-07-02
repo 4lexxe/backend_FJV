@@ -40,6 +40,11 @@ const Club = sequelize.define('Club', {
     estadoAfiliacion: {
         type: DataTypes.STRING(50), 
         allowNull: false
+    },
+    logo: {
+        type: DataTypes.STRING(1000), // URLs pueden ser largas
+        allowNull: true,
+        comment: 'URL del logo del club almacenado en ImgBB'
     }
 }, {
     tableName: 'clubs', 

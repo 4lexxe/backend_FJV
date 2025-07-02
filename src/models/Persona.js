@@ -59,6 +59,11 @@ const Persona = sequelize.define('Persona', {
         type: DataTypes.STRING(100), 
         allowNull: true 
     },
+    numeroAfiliacion: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        comment: 'Número de afiliación opcional'
+    },
     otorgado: { 
         type: DataTypes.BOOLEAN, 
         defaultValue: false 
@@ -72,8 +77,9 @@ const Persona = sequelize.define('Persona', {
         }
     },
     foto: {
-        type: DataTypes.STRING, 
-        allowNull: true
+        type: DataTypes.STRING(1000), // URLs pueden ser largas
+        allowNull: true,
+        comment: 'URL de la imagen de perfil almacenada en ImgBB'
     }
 }, {
     tableName: 'personas', 
