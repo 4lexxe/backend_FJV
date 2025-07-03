@@ -13,7 +13,7 @@ require("dotenv").config();
 // Importar configuraciones y modelos
 const { sequelize, connectDB } = require("./config/database");
 const passport = require("./config/passport");
-const defineAssociations = require("./models/associations");
+const { defineAssociations } = require("./models/associations");
 const corsOptions = require("./config/cors");
 
 // --- Inicialización de Express ---
@@ -26,6 +26,9 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // CORS - Usar la configuración centralizada
 app.use(cors(corsOptions));
+
+// Servir archivos estáticos desde la carpeta uploads
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api/contacto', require('./routes/contacto.routes'));
 
@@ -87,6 +90,9 @@ app.use("/api/pagos", require("./routes/pago.routes"));
 
 // Rutas para pagos públicos
 app.use("/api/public-payment", require("./routes/public-payment.routes"));
+
+// Rutas para configuración del hero
+app.use("/api/hero-config", require("./routes/hero-config.routes"));
 
 // === RUTAS DE WEBHOOKS MERCADOPAGO ===
 // MercadoPago puede enviar webhooks a diferentes rutas, vamos a capturarlas todas

@@ -17,6 +17,8 @@ const Noticia = require("./Noticia");
 const NoticiaVistas = require("./NoticiaVistas");
 const Pago = require("./Pago");
 const PublicPaymentLink = require("./PublicPaymentLink");
+const HeroConfig = require("./HeroConfig");
+const HeroImage = require("./HeroImage");
 
 /**
  * Define todas las asociaciones entre modelos
@@ -180,7 +182,38 @@ function defineAssociations() {
     as: "noticia"
   });
 
+  // --- Asociaciones para Hero Config ---
+  HeroConfig.hasMany(HeroImage, {
+    foreignKey: "idConfig",
+    sourceKey: "idConfig",
+    as: "imagenes",
+    onDelete: "CASCADE"
+  });
+
+  HeroImage.belongsTo(HeroConfig, {
+    foreignKey: "idConfig",
+    targetKey: "idConfig",
+    as: "heroConfig"
+  });
+
   console.log("Asociaciones definidas correctamente");
 }
 
-module.exports = defineAssociations;
+// Exportar función de asociaciones y modelos
+module.exports = {
+  defineAssociations,
+  Rol,
+  Usuario,
+  Club,
+  Categoria,
+  Equipo,
+  Persona,
+  Cobro,
+  Credencial,
+  Noticia,
+  NoticiaVistas,
+  Pago,
+  PublicPaymentLink,
+  HeroConfig,
+  HeroImage
+};

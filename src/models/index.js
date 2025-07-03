@@ -1,3 +1,7 @@
+/**
+ * Archivo de índice que exporta todos los modelos
+ */
+
 // Importar todos los modelos
 const Rol = require("./Rol");
 const Usuario = require("./Usuario");
@@ -11,7 +15,8 @@ const Noticia = require("./Noticia");
 const NoticiaVistas = require("./NoticiaVistas");
 const Pago = require("./Pago");
 const PublicPaymentLink = require("./PublicPaymentLink");
-const Contacto = require("./Contacto");
+const HeroConfig = require("./HeroConfig");
+const HeroImage = require("./HeroImage");
 
 // Exportar todos los modelos
 module.exports = {
@@ -27,5 +32,6 @@ module.exports = {
   NoticiaVistas,
   Pago,
   PublicPaymentLink,
-  Contacto
+  HeroConfig,
+  HeroImage
 }; 
