@@ -245,7 +245,7 @@ async function initializeAdminUser() {
     const adminUser = await Usuario.create({
       nombre: "Admin",
       apellido: "Sistema",
-      email: "admin@sistema.com",
+      email: "alexalexe311@gmail.com",
       password: "Admin123!",
       rolId: adminRol.id,
       emailVerificado: true,
