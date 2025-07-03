@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const heroConfigController = require('../controllers/hero-config.controller');
-const { authenticate } = require('../middleware/auth.middleware.js');
+const { authenticate } = require('../middleware/auth.middleware');
 
 /**
  * @route GET /api/hero-config

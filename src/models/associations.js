@@ -19,6 +19,8 @@ const Pago = require("./Pago");
 const PublicPaymentLink = require("./PublicPaymentLink");
 const HeroConfig = require("./HeroConfig");
 const HeroImage = require("./HeroImage");
+const WorkAreasConfig = require("./WorkAreasConfig");
+const WorkArea = require("./WorkArea");
 
 /**
  * Define todas las asociaciones entre modelos
@@ -196,6 +198,20 @@ function defineAssociations() {
     as: "heroConfig"
   });
 
+  // --- Asociaciones para Work Areas Config ---
+  WorkAreasConfig.hasMany(WorkArea, {
+    foreignKey: "idConfig",
+    sourceKey: "idConfig",
+    as: "WorkAreas",
+    onDelete: "CASCADE"
+  });
+
+  WorkArea.belongsTo(WorkAreasConfig, {
+    foreignKey: "idConfig",
+    targetKey: "idConfig",
+    as: "workAreasConfig"
+  });
+
   console.log("Asociaciones definidas correctamente");
 }
 
@@ -215,5 +231,7 @@ module.exports = {
   Pago,
   PublicPaymentLink,
   HeroConfig,
-  HeroImage
+  HeroImage,
+  WorkAreasConfig,
+  WorkArea
 };
