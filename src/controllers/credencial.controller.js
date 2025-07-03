@@ -33,28 +33,19 @@ credencialCtrl.getCredenciales = async (req, res) => {
     }
 };
 
+
 // Crear una nueva credencial
 credencialCtrl.crearCredencial = async (req, res) => {
     /*
     #swagger.tags = ['Credenciales']
     #swagger.summary = 'Crear una nueva Credencial'
     #swagger.description = 'Crea una nueva credencial asociada a una persona existente.'
-    #swagger.parameters['body'] = {
-        in: 'body',
-        description: 'Datos de la credencial a crear.',
-        required: true,
-        schema: { 
-            idPersona: 1,
-            fechaAlta: '2023-07-01'
-        }
-    }
     */
     try {
         console.log('Datos recibidos en crearCredencial:', req.body);
-        
-        const { idPersona, fechaAlta, avatar } = req.body;
-        
-        // Validar que exista la persona
+
+        const { idPersona, fechaAlta } = req.body;
+
         const persona = await Persona.findByPk(idPersona);
         if (!persona) {
             return res.status(404).json({
@@ -62,15 +53,14 @@ credencialCtrl.crearCredencial = async (req, res) => {
                 msg: "La persona no existe"
             });
         }
-        
-        // Verificar si la persona ya tiene una credencial activa
+
         const credencialExistente = await Credencial.findOne({
             where: {
                 idPersona,
                 estado: 'ACTIVO'
             }
         });
-        
+
         if (credencialExistente) {
             return res.status(400).json({
                 status: "0",
@@ -78,31 +68,24 @@ credencialCtrl.crearCredencial = async (req, res) => {
                 credencial: credencialExistente
             });
         }
-        
-        // Establecer fecha de alta (si se proporciona, usarla; si no, usar la fecha actual)
+
         const fechaAltaObj = fechaAlta ? new Date(fechaAlta) : new Date();
-        
         if (fechaAlta && isNaN(fechaAltaObj.getTime())) {
             return res.status(400).json({
                 status: "0",
                 msg: "Formato de fecha inválido. Use YYYY-MM-DD"
             });
         }
-        
-        // Calcular fecha de vencimiento (un año después de la fecha de alta)
+
         const fechaVencimientoObj = new Date(fechaAltaObj);
         fechaVencimientoObj.setFullYear(fechaVencimientoObj.getFullYear() + 1);
-        
-        // Generar identificador único
+
         const identificador = `FJV-${idPersona}-${fechaAltaObj.getFullYear()}-${Math.floor(Math.random() * 1000)}`;
-        
-        // Determinar estado inicial (si la fecha de vencimiento es mayor o igual que hoy, está activa)
         const fechaActual = new Date();
         const estado = fechaVencimientoObj >= fechaActual ? 'ACTIVO' : 'INACTIVO';
-        
-        // Crear credencial usando transacción
+
         const transaction = await sequelize.transaction();
-        
+
         try {
             const credencial = await Credencial.create({
                 identificador,
@@ -111,37 +94,50 @@ credencialCtrl.crearCredencial = async (req, res) => {
                 estado,
                 idPersona
             }, { transaction });
-            
-            // Si se creó correctamente, actualizar también la información de licencia de la persona
+
             await persona.update({
                 fechaLicencia: fechaAltaObj.toISOString().split('T')[0],
                 fechaLicenciaBaja: fechaVencimientoObj.toISOString().split('T')[0],
                 estadoLicencia: estado
             }, { transaction });
-            
+
             await transaction.commit();
-            
-            // Obtener la credencial con datos de la persona
-            const credencialConPersona = await Credencial.findByPk(credencial.idCredencial, {
-                include: {
-                    model: Persona,
-                    as: 'persona',
-                    attributes: ['idPersona', 'nombreApellido', 'dni', 'fotoPerfil']
-                }
-            });
-            
-            res.status(201).json({
-                status: "1",
-                msg: "Credencial creada exitosamente",
-                credencial: credencialConPersona
-            });
+
+            try {
+                const credencialConPersona = await Credencial.findByPk(credencial.idCredencial, {
+                    include: {
+                        model: Persona,
+                        as: 'persona',
+                        attributes: ['idPersona', 'nombreApellido', 'dni', 'fotoPerfil']
+                    }
+                });
+
+                return res.status(201).json({
+                    status: "1",
+                    msg: "Credencial creada exitosamente",
+                    credencial: credencialConPersona
+                });
+            } catch (includeError) {
+                console.warn("Credencial creada pero error al cargar datos relacionados:", includeError);
+                return res.status(201).json({
+                    status: "1",
+                    msg: "Credencial creada exitosamente (sin datos relacionados)",
+                    credencial
+                });
+            }
         } catch (error) {
             await transaction.rollback();
-            throw error;
+            console.error("Error en crearCredencial (transacción):", error);
+            return res.status(500).json({
+                status: "0",
+                msg: "Error procesando la operación.",
+                error: error.message
+            });
         }
+
     } catch (error) {
-        console.error("Error en crearCredencial:", error);
-        res.status(500).json({
+        console.error("Error en crearCredencial (general):", error);
+        return res.status(500).json({
             status: "0",
             msg: "Error procesando la operación.",
             error: error.message
