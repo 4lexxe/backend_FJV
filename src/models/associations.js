@@ -16,6 +16,7 @@ const Credencial = require("./Credencial");
 const Noticia = require("./Noticia");
 const NoticiaVistas = require("./NoticiaVistas");
 const Pago = require("./Pago");
+const PublicPaymentLink = require("./PublicPaymentLink");
 
 /**
  * Define todas las asociaciones entre modelos
@@ -113,6 +114,20 @@ function defineAssociations() {
 
   Pago.belongsTo(Cobro, {
     foreignKey: "idCobro",
+    targetKey: "idCobro",
+    as: "cobro"
+  });
+
+  // Asociación entre Cobro y PublicPaymentLink
+  Cobro.hasMany(PublicPaymentLink, {
+    foreignKey: "cobroId",
+    sourceKey: "idCobro",
+    as: "publicPaymentLinks",
+    onDelete: "CASCADE"
+  });
+
+  PublicPaymentLink.belongsTo(Cobro, {
+    foreignKey: "cobroId",
     targetKey: "idCobro",
     as: "cobro"
   });

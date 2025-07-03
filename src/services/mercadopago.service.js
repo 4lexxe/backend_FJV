@@ -27,10 +27,20 @@ mpService.crearPreferencia = async (datos) => {
         // URL base del frontend - IMPORTANTE: asegurar que sea una URL completa y válida
         const frontendURL = process.env.FRONTEND_URL || 'http://localhost:4200';
         
+        // URL base del backend para webhooks - usar variable de entorno
+        let backendURL = process.env.WEBHOOK_BASE_URL || process.env.BASE_URL || 'http://localhost:3000';
+        
+        // Asegurar que la URL no termine con barra
+        backendURL = backendURL.replace(/\/$/, '');
+        
+        // Construir URL de webhook correctamente
+        const webhookURL = `${backendURL}/api/webhooks/mercadopago`;
+        
         console.log('CREANDO PREFERENCIA EN MODO PRODUCCIÓN');
         console.log('Credenciales configuradas:', {
             accessToken: process.env.MP_ACCESS_TOKEN ? 'CONFIGURADO' : 'NO CONFIGURADO',
-            publicKey: process.env.MP_PUBLIC_KEY ? 'CONFIGURADO' : 'NO CONFIGURADO'
+            publicKey: process.env.MP_PUBLIC_KEY ? 'CONFIGURADO' : 'NO CONFIGURADO',
+            webhookURL: webhookURL
         });
         
         console.log('Datos de cobro:', {
@@ -81,7 +91,7 @@ mpService.crearPreferencia = async (datos) => {
                 failure: failureUrl,
                 pending: pendingUrl
             },
-            notification_url: `${process.env.BASE_URL || 'https://97g2h5r8-3000.brs.devtunnels.ms'}/api/webhooks/mercadopago`,
+            notification_url: webhookURL,
             statement_descriptor: "FJV - Fed. Jujeña Voley",
             external_reference: `cobro_${id}_club_${idClub}${idEquipo ? `_equipo_${idEquipo}` : ''}`,
             expires: false, // En producción, a menudo es mejor no establecer expiración

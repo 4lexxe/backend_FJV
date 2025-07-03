@@ -48,8 +48,27 @@ personaCtrl.createPersona = async (req, res) => {
     // A estas alturas, si había una foto, el middleware ya la procesó
     // y la URL de la imagen está en req.body.foto
 
-    // Crear persona con los datos proporcionados (incluida la foto ya procesada)
-    const persona = await Persona.create(req.body);
+    const personaData = { ...req.body };
+
+    // Procesar el campo 'tipo' para asegurar que sea un array
+    if (personaData.tipo) {
+      if (typeof personaData.tipo === 'string') {
+        // Si es un string con comas, dividirlo. Si es un string simple, ponerlo en array
+        personaData.tipo = personaData.tipo.includes(',') 
+          ? personaData.tipo.split(',').map(t => t.trim()) 
+          : [personaData.tipo];
+        console.log('🔄 Campo tipo convertido de string a array:', personaData.tipo);
+      } else if (!Array.isArray(personaData.tipo)) {
+        // Si no es string ni array, convertir a array vacío
+        personaData.tipo = [];
+        console.log('⚠️ Campo tipo no válido, convertido a array vacío');
+      }
+    }
+
+    console.log('📋 Datos finales a crear:', personaData);
+
+    // Crear persona con los datos procesados (incluida la foto ya procesada)
+    const persona = await Persona.create(personaData);
 
     res.status(201).json({
       status: "1",
@@ -132,7 +151,22 @@ personaCtrl.editPersona = async (req, res) => {
     // A estas alturas, si había una foto, el middleware ya la procesó
     // y la URL de la imagen está en req.body.foto
 
-    const personaData = req.body; 
+    const personaData = { ...req.body }; 
+
+    // Procesar el campo 'tipo' para asegurar que sea un array
+    if (personaData.tipo) {
+      if (typeof personaData.tipo === 'string') {
+        // Si es un string con comas, dividirlo. Si es un string simple, ponerlo en array
+        personaData.tipo = personaData.tipo.includes(',') 
+          ? personaData.tipo.split(',').map(t => t.trim()) 
+          : [personaData.tipo];
+        console.log('🔄 Campo tipo convertido de string a array:', personaData.tipo);
+      } else if (!Array.isArray(personaData.tipo)) {
+        // Si no es string ni array, convertir a array vacío
+        personaData.tipo = [];
+        console.log('⚠️ Campo tipo no válido, convertido a array vacío');
+      }
+    }
 
     // Opcional: Validar que el Club exista si se proporciona idClub
     if (personaData.idClub) {
@@ -144,6 +178,8 @@ personaCtrl.editPersona = async (req, res) => {
         });
       }
     }
+
+    console.log('📋 Datos finales a actualizar:', personaData);
 
     const [updatedRowsCount, updatedPersonas] = await Persona.update(
       personaData,
@@ -524,6 +560,246 @@ personaCtrl.getCantidadPorClub = async (req, res) => {
     res.status(500).json({
       msg: "Error al obtener cantidad por club",
       error: error.message,
+    });
+  }
+};
+
+// Obtener métricas avanzadas para gráficos
+personaCtrl.getMetricasAvanzadas = async (req, res) => {
+  /*
+    #swagger.tags = ['Estadísticas']
+    #swagger.summary = 'Obtener métricas avanzadas de afiliados'
+    #swagger.description = 'Retorna métricas detalladas para gráficos y estadísticas del dashboard de afiliados.'
+    */
+  try {
+    // Obtener todos los afiliados con sus clubes
+    const afiliados = await Persona.findAll({
+      include: {
+        model: Club,
+        as: "club",
+        attributes: ["idClub", "nombre"],
+      },
+    });
+
+    // Resumen general
+    const totalAfiliados = afiliados.length;
+    const totalFJV = afiliados.filter(a => a.licencia === 'FJV').length;
+    const totalFEVA = afiliados.filter(a => a.licencia === 'FEVA').length;
+
+    // Estadísticas por estado de licencia
+    const activosCount = afiliados.filter(a => a.estadoLicencia === 'ACTIVO').length;
+    const vencidosCount = afiliados.filter(a => a.estadoLicencia === 'VENCIDO').length;
+    const inactivosCount = afiliados.filter(a => a.estadoLicencia === 'INACTIVO').length;
+
+    // Distribución por tipo de licencia
+    const distribucionLicencia = {
+      FJV: totalFJV,
+      FEVA: totalFEVA,
+      SinLicencia: afiliados.filter(a => !a.licencia || a.licencia === '').length
+    };
+
+    // Distribución por club (top 10)
+    const clubMap = new Map();
+    afiliados.forEach(afiliado => {
+      const clubName = afiliado.club?.nombre || 'Sin Club';
+      if (!clubMap.has(clubName)) {
+        clubMap.set(clubName, {
+          nombre: clubName,
+          total: 0,
+          activos: 0,
+          vencidos: 0,
+          fjv: 0,
+          feva: 0
+        });
+      }
+      const club = clubMap.get(clubName);
+      club.total += 1;
+      
+      if (afiliado.estadoLicencia === 'ACTIVO') club.activos += 1;
+      else if (afiliado.estadoLicencia === 'VENCIDO') club.vencidos += 1;
+      
+      if (afiliado.licencia === 'FJV') club.fjv += 1;
+      else if (afiliado.licencia === 'FEVA') club.feva += 1;
+    });
+
+    const distribucionPorClub = Array.from(clubMap.values())
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 15); // Top 15 clubes
+
+    // Distribución por categorías
+    const categoriaMap = new Map();
+    afiliados.forEach(afiliado => {
+      if (afiliado.tipo && Array.isArray(afiliado.tipo)) {
+        afiliado.tipo.forEach(categoria => {
+          if (!categoriaMap.has(categoria)) {
+            categoriaMap.set(categoria, 0);
+          }
+          categoriaMap.set(categoria, categoriaMap.get(categoria) + 1);
+        });
+      }
+    });
+
+    const distribucionPorCategoria = Array.from(categoriaMap.entries())
+      .map(([categoria, cantidad]) => ({ categoria, cantidad }))
+      .sort((a, b) => b.cantidad - a.cantidad)
+      .slice(0, 10); // Top 10 categorías
+
+    // Estadísticas mensuales de registros (últimos 12 meses)
+    const ahora = new Date();
+    const registrosMensuales = [];
+    
+    for (let i = 11; i >= 0; i--) {
+      const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+      const siguienteFecha = new Date(ahora.getFullYear(), ahora.getMonth() - i + 1, 1);
+      
+      const registrosMes = afiliados.filter(a => {
+        if (!a.createdAt) return false;
+        const fechaCreacion = new Date(a.createdAt);
+        return fechaCreacion >= fecha && fechaCreacion < siguienteFecha;
+      });
+
+      registrosMensuales.push({
+        mes: fecha.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }),
+        total: registrosMes.length,
+        fjv: registrosMes.filter(a => a.licencia === 'FJV').length,
+        feva: registrosMes.filter(a => a.licencia === 'FEVA').length
+      });
+    }
+
+    // Análisis de vencimientos próximos (próximos 3 meses)
+    const hoy = new Date();
+    const enTresMeses = new Date(hoy.getFullYear(), hoy.getMonth() + 3, hoy.getDate());
+    
+    const proxVencimientos = afiliados.filter(a => {
+      if (!a.fechaLicenciaBaja || a.estadoLicencia === 'VENCIDO') return false;
+      const fechaVencimiento = new Date(a.fechaLicenciaBaja);
+      return fechaVencimiento >= hoy && fechaVencimiento <= enTresMeses;
+    }).length;
+
+    const metricas = {
+      resumen: {
+        totalAfiliados,
+        totalFJV,
+        totalFEVA,
+        activosCount,
+        vencidosCount,
+        inactivosCount,
+        proxVencimientos,
+        porcentajeActivos: totalAfiliados > 0 ? ((activosCount / totalAfiliados) * 100) : 0
+      },
+      distribucionLicencia,
+      estadosLicencia: {
+        Activos: activosCount,
+        Vencidos: vencidosCount,
+        Inactivos: inactivosCount
+      },
+      distribucionPorClub,
+      distribucionPorCategoria,
+      registrosMensuales,
+      fechaActualizacion: new Date()
+    };
+
+    res.status(200).json(metricas);
+  } catch (error) {
+    console.error("Error en getMetricasAvanzadas:", error);
+    res.status(500).json({
+      status: "0",
+      msg: "Error procesando las métricas",
+      error: error.message
+    });
+  }
+};
+
+// Obtener estadísticas de crecimiento por período
+personaCtrl.getEstadisticasCrecimiento = async (req, res) => {
+  /*
+    #swagger.tags = ['Estadísticas']
+    #swagger.summary = 'Obtener estadísticas de crecimiento de afiliados'
+    #swagger.description = 'Retorna estadísticas de crecimiento de afiliados por período específico.'
+    */
+  try {
+    const { periodo = 'mes', fechaInicio, fechaFin } = req.query;
+    
+    let whereClause = {};
+    
+    if (fechaInicio && fechaFin) {
+      whereClause.createdAt = {
+        [Op.between]: [fechaInicio, fechaFin]
+      };
+    } else {
+      // Por defecto, últimos 6 meses
+      const fechaLimite = new Date();
+      fechaLimite.setMonth(fechaLimite.getMonth() - 6);
+      whereClause.createdAt = {
+        [Op.gte]: fechaLimite
+      };
+    }
+
+    const afiliados = await Persona.findAll({
+      where: whereClause,
+      include: {
+        model: Club,
+        as: "club",
+        attributes: ["idClub", "nombre"],
+      },
+      order: [['createdAt', 'ASC']]
+    });
+
+    // Agrupar por período
+    const estadisticas = {};
+    
+    afiliados.forEach(afiliado => {
+      let clave;
+      const fecha = new Date(afiliado.createdAt);
+      
+      if (periodo === 'dia') {
+        clave = fecha.toISOString().split('T')[0];
+      } else if (periodo === 'semana') {
+        const inicioSemana = new Date(fecha);
+        inicioSemana.setDate(fecha.getDate() - fecha.getDay());
+        clave = inicioSemana.toISOString().split('T')[0];
+      } else {
+        clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+      }
+      
+      if (!estadisticas[clave]) {
+        estadisticas[clave] = {
+          periodo: clave,
+          totalNuevos: 0,
+          nuevos_FJV: 0,
+          nuevos_FEVA: 0,
+          activos: 0
+        };
+      }
+      
+      estadisticas[clave].totalNuevos += 1;
+      
+      if (afiliado.licencia === 'FJV') {
+        estadisticas[clave].nuevos_FJV += 1;
+      } else if (afiliado.licencia === 'FEVA') {
+        estadisticas[clave].nuevos_FEVA += 1;
+      }
+      
+      if (afiliado.estadoLicencia === 'ACTIVO') {
+        estadisticas[clave].activos += 1;
+      }
+    });
+
+    const resultado = Object.values(estadisticas).sort((a, b) => 
+      new Date(a.periodo) - new Date(b.periodo)
+    );
+
+    res.status(200).json({
+      periodo,
+      estadisticas: resultado,
+      fechaActualizacion: new Date()
+    });
+  } catch (error) {
+    console.error("Error en getEstadisticasCrecimiento:", error);
+    res.status(500).json({
+      status: "0",
+      msg: "Error procesando las estadísticas",
+      error: error.message
     });
   }
 };

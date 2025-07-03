@@ -51,7 +51,8 @@ app.use(passport.session());
 app.set("port", process.env.PORT || 3000);
 
 // === RUTAS ===
-// La API base
+// La API base (comentada para evitar conflicto con webhook handler)
+/*
 app.get("/", (req, res) => {
   res.json({
     name: "API de la Federación Jujeña de Voley",
@@ -59,6 +60,7 @@ app.get("/", (req, res) => {
     status: "OK",
   });
 });
+*/
 
 // Importante: asegurar que las rutas de autenticación se carguen primero
 app.use("/api/auth", require("./routes/auth.routes"));
@@ -83,8 +85,43 @@ app.use("/api/mp", require("./routes/mp.routes.js"));
 // Rutas para pagos con MercadoPago
 app.use("/api/pagos", require("./routes/pago.routes"));
 
-// Asegurar que las rutas de webhooks estén registradas
+// Rutas para pagos públicos
+app.use("/api/public-payment", require("./routes/public-payment.routes"));
+
+// === RUTAS DE WEBHOOKS MERCADOPAGO ===
+// MercadoPago puede enviar webhooks a diferentes rutas, vamos a capturarlas todas
+
+// Ruta principal de webhooks
 app.use("/api/webhooks", require("./routes/webhook.routes"));
+
+// Rutas alternativas para webhooks de MercadoPago (por si llegan con URLs malformadas)
+const webhookController = require("./controllers/webhook.controller");
+
+// Capturar webhooks que llegan directamente a la raíz
+app.post("/", webhookController.mercadoPago);
+
+// Solo capturar GET en raíz si tiene parámetros de MercadoPago
+app.get("/", (req, res, next) => {
+  // Si tiene parámetros de MercadoPago, procesar como webhook
+  if ((req.query.id && req.query.topic) || (req.query['data.id'] && req.query.type)) {
+    return webhookController.mercadoPago(req, res, next);
+  }
+  
+  // Si no, responder con información de la API
+  res.json({
+    name: "API de la Federación Jujeña de Voley",
+    version: "1.0.0",
+    status: "OK",
+  });
+});
+
+// Capturar webhooks con doble barra (URL malformada)
+app.post("//api/webhooks/mercadopago", webhookController.mercadoPago);
+app.get("//api/webhooks/mercadopago", webhookController.mercadoPago);
+
+// Capturar webhooks en ruta absoluta sin /api
+app.post("/webhooks/mercadopago", webhookController.mercadoPago);
+app.get("/webhooks/mercadopago", webhookController.mercadoPago);
 
 // Middleware para manejo de errores 404 - DEBE SER EL ÚLTIMO
 app.use((req, res, next) => {
@@ -107,7 +144,7 @@ async function startServer() {
     defineAssociations();
 
     // 3. Sincronizar modelos con la base de datos
-    await sequelize.sync({ force: true });
+    await sequelize.sync({ alter: true });
     console.log(
       "✔ Todos los modelos fueron sincronizados exitosamente con la base de datos."
     );

@@ -16,4 +16,8 @@ router.put("/:id", authenticate, authorize('admin'), cobroCtrl.updateCobro);
 router.delete("/:id", authenticate, authorize('admin'), cobroCtrl.deleteCobro);
 router.patch("/:id/estado", authenticate, authorize('admin'), cobroCtrl.cambiarEstadoCobro);
 
+// Rutas para métricas y estadísticas
+router.get("/metricas/avanzadas", cobroCtrl.getMetricasAvanzadas);
+router.get("/estadisticas/recaudacion", cobroCtrl.getEstadisticasRecaudacion);
+
 module.exports = router;

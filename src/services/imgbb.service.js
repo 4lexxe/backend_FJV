@@ -2,7 +2,8 @@ const axios = require('axios');
 const FormData = require('form-data');
 
 // API Key de ImgBB - debería estar en variables de entorno
-const IMGBB_API_KEY = process.env.IMGBB_API_KEY;
+// Agregamos una API key temporal para desarrollo
+const IMGBB_API_KEY = process.env.IMGBB_API_KEY || 'c5e30aa93ac5a5e9b34aa4d4f93b6e79'; // API key temporal
 
 const imgbbService = {
     /**
@@ -13,6 +14,9 @@ const imgbbService = {
      */
     uploadImage: async (imageData, name) => {
         try {
+            console.log('🔍 Iniciando subida a ImgBB...');
+            console.log('📋 API Key disponible:', IMGBB_API_KEY ? 'Sí' : 'No');
+            
             if (!IMGBB_API_KEY) {
                 throw new Error('ImgBB API Key no configurada');
             }
@@ -22,32 +26,71 @@ const imgbbService = {
             
             // Puede ser un buffer o string base64 (sin el prefijo data:image/*)
             if (Buffer.isBuffer(imageData)) {
+                console.log('📷 Procesando imagen desde buffer...');
                 form.append('image', imageData.toString('base64'));
             } else {
-                form.append('image', imageData);
+                console.log('📷 Procesando imagen desde base64...');
+                // Si es un string base64, verificar que no tenga el prefijo data:image/
+                const cleanBase64 = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
+                form.append('image', cleanBase64);
             }
             
             if (name) {
                 form.append('name', name);
             }
 
+            console.log('🚀 Enviando petición a ImgBB...');
             const response = await axios.post('https://api.imgbb.com/1/upload', form, {
-                headers: form.getHeaders()
+                headers: form.getHeaders(),
+                timeout: 30000 // 30 segundos de timeout
             });
 
+            console.log('✅ Respuesta de ImgBB recibida:', response.data.success);
+
             if (response.data.success) {
+                console.log('🎉 Imagen subida exitosamente a ImgBB');
+                console.log('🔗 URL de la imagen:', response.data.data.url);
                 return {
                     success: true,
                     data: response.data.data
                 };
             } else {
-                throw new Error('Error en respuesta de ImgBB');
+                console.error('❌ Error en respuesta de ImgBB:', response.data);
+                throw new Error('Error en respuesta de ImgBB: ' + (response.data.error?.message || 'Respuesta no exitosa'));
             }
         } catch (error) {
-            console.error('Error en imgbbService.uploadImage:', error);
+            console.error('💥 Error en imgbbService.uploadImage:', error);
+            
+            // Manejo más específico de errores
+            let errorMessage = 'Error al subir imagen a ImgBB';
+            
+            if (error.response) {
+                // Error de respuesta HTTP
+                console.error('📊 Status de respuesta:', error.response.status);
+                console.error('📋 Datos de respuesta:', error.response.data);
+                
+                if (error.response.status === 400) {
+                    errorMessage = 'Error 400: Datos de imagen inválidos o API key incorrecta';
+                } else if (error.response.status === 401) {
+                    errorMessage = 'Error 401: API key de ImgBB inválida o expirada';
+                } else if (error.response.status === 429) {
+                    errorMessage = 'Error 429: Límite de peticiones excedido en ImgBB';
+                } else {
+                    errorMessage = `Error HTTP ${error.response.status}: ${error.response.data?.error?.message || 'Error del servidor ImgBB'}`;
+                }
+            } else if (error.request) {
+                // Error de conexión
+                console.error('🌐 Error de conexión:', error.message);
+                errorMessage = 'Error de conexión con ImgBB. Verifique su conexión a internet';
+            } else if (error.code === 'ECONNABORTED') {
+                // Timeout
+                errorMessage = 'Timeout: La subida a ImgBB tardó demasiado tiempo';
+            }
+            
             return {
                 success: false,
-                error: error.message || 'Error al subir imagen a ImgBB'
+                error: errorMessage,
+                details: error.message
             };
         }
     }

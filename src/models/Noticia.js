@@ -98,10 +98,16 @@ const Noticia = sequelize.define('Noticia', {
         comment: 'Texto alternativo para la imagen principal'
     },
     estado: {
-        type: DataTypes.ENUM('ACTIVO', 'INACTIVO', 'BORRADOR'),
+        type: DataTypes.STRING(20),
         allowNull: false,
         defaultValue: 'BORRADOR',
-        comment: 'Estado de la noticia: ACTIVO (publicada), INACTIVO (despublicada), BORRADOR'
+        comment: 'Estado de la noticia: ACTIVO (publicada), INACTIVO (despublicada), BORRADOR',
+        validate: {
+            isIn: {
+                args: [['ACTIVO', 'INACTIVO', 'BORRADOR']],
+                msg: "El estado debe ser: ACTIVO, INACTIVO o BORRADOR"
+            }
+        }
     },
     fechaPublicacion: {
         type: DataTypes.DATE,

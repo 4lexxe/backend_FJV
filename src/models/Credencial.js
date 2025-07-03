@@ -10,7 +10,6 @@ const Credencial = sequelize.define('Credencial', {
     },
     identificador: {
         type: DataTypes.STRING(50),
-        unique: true,
         allowNull: false,
         comment: 'Código único de identificación para la credencial',
         validate: {
@@ -81,6 +80,13 @@ const Credencial = sequelize.define('Credencial', {
 }, {
     tableName: 'credenciales',
     timestamps: true,
+    indexes: [
+        {
+            unique: true,
+            fields: ['identificador'],
+            name: 'credenciales_identificador_unique'
+        }
+    ],
     hooks: {
         beforeValidate: (credencial) => {
             // Asegurar que fechaVencimiento sea 1 año después de fechaAlta

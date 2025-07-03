@@ -16,6 +16,10 @@ router.get("/tipo", personaCtrl.getCantidadPorCategoria);
 router.get("/clubes", personaCtrl.getCantidadPorClub);
 router.get("/filtro/buscar", personaCtrl.getPersonaFiltro);
 
+// Rutas para métricas avanzadas y analíticas
+router.get("/metricas/avanzadas", personaCtrl.getMetricasAvanzadas);
+router.get("/estadisticas/crecimiento", personaCtrl.getEstadisticasCrecimiento);
+
 // --- Rutas de Actualización Masiva ---
 router.post(
   "/actualizar-estado-licencias",
