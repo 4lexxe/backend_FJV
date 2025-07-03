@@ -21,6 +21,8 @@ const HeroConfig = require("./HeroConfig");
 const HeroImage = require("./HeroImage");
 const WorkAreasConfig = require("./WorkAreasConfig");
 const WorkArea = require("./WorkArea");
+const MomentosDestacadosConfig = require('./MomentosDestacadosConfig');
+const MomentosDestacadosImage = require('./MomentosDestacadosImage');
 
 /**
  * Define todas las asociaciones entre modelos
@@ -212,6 +214,20 @@ function defineAssociations() {
     as: "workAreasConfig"
   });
 
+  // --- Asociaciones para Momentos Destacados ---
+  MomentosDestacadosConfig.hasMany(MomentosDestacadosImage, {
+    foreignKey: 'idConfig',
+    sourceKey: 'idConfig',
+    as: 'imagenes',
+    onDelete: 'CASCADE'
+  });
+
+  MomentosDestacadosImage.belongsTo(MomentosDestacadosConfig, {
+    foreignKey: 'idConfig',
+    targetKey: 'idConfig',
+    as: 'configuracion'
+  });
+
   console.log("Asociaciones definidas correctamente");
 }
 
@@ -233,5 +249,7 @@ module.exports = {
   HeroConfig,
   HeroImage,
   WorkAreasConfig,
-  WorkArea
+  WorkArea,
+  MomentosDestacadosConfig,
+  MomentosDestacadosImage
 };

@@ -97,6 +97,9 @@ app.use("/api/hero-config", require("./routes/hero-config.routes"));
 // Rutas para configuración de áreas de trabajo
 app.use("/api/work-areas", require("./routes/work-areas.routes"));
 
+// Rutas para momentos destacados
+app.use("/api/momentos-destacados", require("./routes/momentos-destacados.routes"));
+
 // === RUTAS DE WEBHOOKS MERCADOPAGO ===
 // MercadoPago puede enviar webhooks a diferentes rutas, vamos a capturarlas todas
 
