@@ -173,9 +173,17 @@ async function startServer() {
 
     // 7. Iniciar el servidor HTTP
     app.listen(app.get("port"), () => {
-      console.log(
-        `🚀 Servidor backend escuchando en http://localhost:${app.get("port")}`
-      );
+      const port = app.get("port");
+      const isProduction = process.env.NODE_ENV === "production";
+      
+      if (isProduction) {
+        console.log(`🚀 Servidor backend desplegado correctamente en producción`);
+        console.log(`   - Puerto: ${port}`);
+        console.log(`   - Entorno: Producción`);
+      } else {
+        console.log(`🚀 Servidor backend escuchando en http://localhost:${port}`);
+        console.log(`   - Entorno: Desarrollo`);
+      }
     });
   } catch (error) {
     console.error("❌ Error al iniciar el servidor:", error);
