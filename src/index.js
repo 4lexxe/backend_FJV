@@ -73,6 +73,7 @@ app.use("/api/profile", require("./routes/profile.routes"));
 app.use("/api/usuario", require("./routes/usuario.routes"));
 app.use("/api/rol", require("./routes/rol.routes"));
 app.use("/api/personas", require("./routes/persona.routes")); 
+app.use("/api/afiliados", require("./routes/afiliados"));
 app.use("/api/clubs", require("./routes/club.routes"));
 app.use("/api/categorias", require("./routes/categoria.routes"));
 app.use("/api/equipos", require("./routes/equipo.routes"));
