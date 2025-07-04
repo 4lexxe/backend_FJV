@@ -11,6 +11,7 @@ const Club = require("./Club");
 const Categoria = require("./Categoria");
 const Equipo = require("./Equipo");
 const Persona = require("./Persona");
+const Pase = require("./Pase");
 const Cobro = require("./Cobro");
 const Credencial = require("./Credencial");
 const Noticia = require("./Noticia");
@@ -53,6 +54,24 @@ function defineAssociations() {
     hooks: true,
   });
 
+  // Asociaciones para Pases como club proveniente
+  Club.hasMany(Pase, {
+    foreignKey: "idClubProveniente",
+    sourceKey: "idClub",
+    as: "pasesProvenientes",
+    onDelete: "SET NULL",
+    hooks: true,
+  });
+
+  // Asociaciones para Pases como club destino
+  Club.hasMany(Pase, {
+    foreignKey: "idClubDestino",
+    sourceKey: "idClub",
+    as: "pasesDestino",
+    onDelete: "CASCADE",
+    hooks: true,
+  });
+
   // --- Asociaciones para Persona ---
   Persona.belongsTo(Club, {
     foreignKey: "idClub",
@@ -69,6 +88,33 @@ function defineAssociations() {
   Credencial.belongsTo(Persona, {
     foreignKey: "idPersona",
     as: "persona",
+  });
+
+  // Relación entre Persona y Pase (una persona puede tener varios pases)
+  Persona.hasMany(Pase, {
+    foreignKey: "idPersona",
+    as: "pases",
+    onDelete: "CASCADE",
+    hooks: true,
+  });
+
+  // --- Asociaciones para Pase ---
+  Pase.belongsTo(Persona, {
+    foreignKey: "idPersona",
+    targetKey: "idPersona",
+    as: "persona",
+  });
+
+  Pase.belongsTo(Club, {
+    foreignKey: "idClubProveniente",
+    targetKey: "idClub",
+    as: "clubOrigenRelacion",
+  });
+
+  Pase.belongsTo(Club, {
+    foreignKey: "idClubDestino",
+    targetKey: "idClub",
+    as: "clubDestinoRelacion",
   });
 
   // --- Asociaciones para Equipo ---
@@ -240,6 +286,7 @@ module.exports = {
   Categoria,
   Equipo,
   Persona,
+  Pase,
   Cobro,
   Credencial,
   Noticia,

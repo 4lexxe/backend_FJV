@@ -2,6 +2,7 @@ const Persona = require("../models/Persona");
 const Club = require("../models/Club"); 
 const { Op } = require("sequelize");
 const { sequelize } = require('../config/database');
+const paseCtrl = require('./pase.controller');
 
 const personaCtrl = {};
 
@@ -148,6 +149,22 @@ personaCtrl.editPersona = async (req, res) => {
   try {
     console.log("Editando persona ID:", req.params.id, "con datos:", req.body);
 
+    // Obtener datos actuales de la persona ANTES de la actualización
+    const personaAnterior = await Persona.findByPk(req.params.id, {
+      include: {
+        model: Club,
+        as: "club",
+        attributes: ["idClub", "nombre"]
+      }
+    });
+
+    if (!personaAnterior) {
+      return res.status(404).json({
+        status: "0",
+        msg: "Persona no encontrada para actualizar.",
+      });
+    }
+
     // A estas alturas, si había una foto, el middleware ya la procesó
     // y la URL de la imagen está en req.body.foto
 
@@ -168,10 +185,11 @@ personaCtrl.editPersona = async (req, res) => {
       }
     }
 
-    // Opcional: Validar que el Club exista si se proporciona idClub
+    // Obtener información del club nuevo si se proporciona
+    let clubNuevo = null;
     if (personaData.idClub) {
-      const clubExistente = await Club.findByPk(personaData.idClub);
-      if (!clubExistente) {
+      clubNuevo = await Club.findByPk(personaData.idClub);
+      if (!clubNuevo) {
         return res.status(400).json({
           status: "0",
           msg: `El Club con ID ${personaData.idClub} no existe.`,
@@ -181,6 +199,18 @@ personaCtrl.editPersona = async (req, res) => {
 
     console.log('📋 Datos finales a actualizar:', personaData);
 
+    // Verificar si hay cambio de club
+    const idClubAnterior = personaAnterior.idClub;
+    const idClubNuevo = personaData.idClub;
+    const hayCambioDeClub = idClubAnterior !== idClubNuevo;
+
+    console.log('🔄 Verificando cambio de club:', {
+      idClubAnterior,
+      idClubNuevo,
+      hayCambioDeClub
+    });
+
+    // Actualizar la persona
     const [updatedRowsCount, updatedPersonas] = await Persona.update(
       personaData,
       {
@@ -194,6 +224,39 @@ personaCtrl.editPersona = async (req, res) => {
         status: "0",
         msg: "Persona no encontrada para actualizar.",
       });
+    }
+
+    // Si hay cambio de club, registrar el pase automáticamente
+    if (hayCambioDeClub) {
+      try {
+        const clubAnteriorNombre = personaAnterior.club ? personaAnterior.club.nombre : null;
+        const clubNuevoNombre = clubNuevo ? clubNuevo.nombre : null;
+
+        // Preparar datos del afiliado para el historial
+        const datosAfiliado = {
+          categoria: personaData.categoria || personaAnterior.categoria,
+          categoriaNivel: personaData.categoriaNivel || personaAnterior.categoriaNivel,
+          tipo: personaData.tipo || personaAnterior.tipo,
+          licencia: personaData.licencia || personaAnterior.licencia,
+          fechaActualizacion: new Date().toISOString()
+        };
+
+        // Registrar el pase automáticamente
+        await paseCtrl.registrarPaseAutomatico(
+          parseInt(req.params.id),
+          clubAnteriorNombre,
+          idClubAnterior,
+          clubNuevoNombre,
+          idClubNuevo,
+          datosAfiliado
+        );
+
+        console.log(`✅ Pase registrado automáticamente para persona ${req.params.id}: ${clubAnteriorNombre || 'Sin club'} → ${clubNuevoNombre || 'Sin club'}`);
+      } catch (paseError) {
+        console.error('❌ Error al registrar pase automático:', paseError);
+        // No fallar la actualización de la persona por un error en el pase
+        // Solo logear el error
+      }
     }
 
     res.status(200).json({

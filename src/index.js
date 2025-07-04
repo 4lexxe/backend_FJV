@@ -41,7 +41,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000, // 1 día
     },
   })
 );
@@ -79,6 +79,7 @@ app.use("/api/equipos", require("./routes/equipo.routes"));
 app.use("/api/cobros", require("./routes/cobro.routes")); 
 app.use("/api/credenciales", require("./routes/credencial.routes")); 
 app.use("/api/noticias", require("./routes/noticia.routes")); 
+app.use("/api/pases", require("./routes/pase.routes")); 
 app.use("/api/ipguide", require("./routes/ipGuide.routes.js")); 
 app.use("/api/ip-guide", require("./routes/ipGuide.routes.js")); 
 
