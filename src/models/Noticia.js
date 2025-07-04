@@ -165,6 +165,9 @@ const Noticia = sequelize.define('Noticia', {
         },
         comment: 'ID del último usuario que editó la noticia'
     },
+    contenido: {
+        type: DataTypes.TEXT,
+      },
     // Añadir campo slug para URLs amigables
     slug: {
         type: DataTypes.STRING(350),
