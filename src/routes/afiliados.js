@@ -4,7 +4,8 @@ const {
     filtrarAfiliadosAvanzado, 
     obtenerOpcionesFiltros, 
     guardarConfiguracionFiltro,
-    exportarAfiliadosExcel 
+    exportarAfiliadosExcel,
+    poblarDatosPrueba
 } = require('../controllers/afiliadosController');
 
 // Ruta principal para filtros avanzados
@@ -15,6 +16,9 @@ router.get('/opciones-filtros', obtenerOpcionesFiltros);
 
 // Ruta para guardar configuraciones de filtros
 router.post('/configuraciones-filtro', guardarConfiguracionFiltro);
+
+// Ruta para poblar datos de prueba (solo desarrollo)
+router.post('/poblar-datos-prueba', poblarDatosPrueba);
 
 // Ruta específica para exportar a Excel
 router.get('/exportar-excel', (req, res) => {

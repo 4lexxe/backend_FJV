@@ -325,36 +325,101 @@ personaCtrl.getPersonaFiltro = async (req, res) => {
     #swagger.tags = ['Personas']
     #swagger.summary = 'Filtrar Personas'
     #swagger.description = 'Retorna personas que coinciden con los criterios de filtro (nombreApellido, dni, tipo, categoria, fechaNacimiento, fechaLicencia, idClub).'
-    #swagger.parameters['nombreApellido'] = { in: 'query', description: 'Filtra por nombre o apellido de la persona.', type: 'string' }
-    #swagger.parameters['dni'] = { in: 'query', description: 'Filtra por DNI de la persona.', type: 'string' }
-    #swagger.parameters['tipo'] = { in: 'query', description: 'Filtra por el tipo de persona (ej. Jugador, Entrenador).', type: 'string' }
-    #swagger.parameters['categoria'] = { in: 'query', description: 'Filtra por la categoría de la persona.', type: 'string' }
-    #swagger.parameters['fechaNacimientoDesde'] = { in: 'query', description: 'Filtra por fecha de nacimiento desde (YYYY-MM-DD).', type: 'string' }
-    #swagger.parameters['fechaNacimientoHasta'] = { in: 'query', description: 'Filtra por fecha de nacimiento hasta (YYYY-MM-DD).', type: 'string' }
-    #swagger.parameters['fechaLicenciaDesde'] = { in: 'query', description: 'Filtra por fecha de licencia desde (YYYY-MM-DD).', type: 'string' }
-    #swagger.parameters['fechaLicenciaHasta'] = { in: 'query', description: 'Filtra por fecha de licencia hasta (YYYY-MM-DD).', type: 'string' }
-    #swagger.parameters['idClub'] = { in: 'query', description: 'Filtra por ID del Club asociado.', type: 'integer' }
     */
   const query = req.query;
   const criteria = {};
 
-  if (query.nombreApellido) {
-    criteria.nombreApellido = { [Op.iLike]: `%${query.nombreApellido}%` };
+  // Corregir el filtro por nombre/apellido
+  if (query.nombreApellido || query.apellidoNombre) {
+    // Usar el parámetro que venga en la solicitud (nombreApellido o apellidoNombre)
+    const terminoBusqueda = query.nombreApellido || query.apellidoNombre;
+    criteria.nombreApellido = { [Op.iLike]: `%${terminoBusqueda}%` };
+    console.log(`🔍 Buscando por nombre/apellido: "${terminoBusqueda}"`);
   }
+
   if (query.dni) {
     criteria.dni = { [Op.iLike]: `%${query.dni}%` };
   }
+  
+  // Mejorar el manejo del campo tipo cuando viene como string separado por comas
   if (query.tipo) {
-    criteria.tipo = { [Op.contains]: [query.tipo] };
+    let tipoArray;
+    if (typeof query.tipo === 'string') {
+      // Si es un string con comas, dividirlo en array
+      tipoArray = query.tipo.split(',').map(t => t.trim());
+    } else if (Array.isArray(query.tipo)) {
+      tipoArray = query.tipo;
+    } else {
+      tipoArray = [query.tipo];
+    }
+    
+    // Usar el operador de array correcto en Sequelize
+    criteria.tipo = {
+      [Op.overlap]: tipoArray
+    };
+    
+    console.log('Criterio de tipo aplicado:', criteria.tipo);
   }
+  
   if (query.categoria) {
     criteria.categoria = { [Op.iLike]: `%${query.categoria}%` };
   }
-  if (query.idClub) {
-    criteria.idClub = query.idClub; 
+  
+  if (query.categoriaNivel) {
+    criteria.categoriaNivel = { [Op.iLike]: `%${query.categoriaNivel}%` };
+  }
+  
+  // Filtro específico para clubes
+  if (query.clubId) {
+    // Filtrar por club específico
+    criteria.idClub = query.clubId;
+    console.log(`🔍 Filtrando por club ID: ${query.clubId}`);
+  } else if (query.clubNombre) {
+    // Buscar clubes por nombre y obtener sus IDs
+    const clubes = await Club.findAll({
+      where: {
+        nombre: { [Op.iLike]: `%${query.clubNombre}%` }
+      },
+      attributes: ['idClub']
+    });
+    
+    if (clubes && clubes.length > 0) {
+      const clubIds = clubes.map(c => c.idClub);
+      criteria.idClub = { [Op.in]: clubIds };
+      console.log(`🔍 Filtrando por clubes con nombre similar a "${query.clubNombre}":`, clubIds);
+    }
+  } else if (query.soloConClub === 'true') {
+    // Solo mostrar afiliados que tienen club asignado
+    criteria.idClub = { [Op.not]: null };
+    console.log('🔍 Filtrando solo afiliados con club asignado');
   }
 
-  // Filtros de rango de fechas
+  // Filtro específico para pases
+  if (query.tienePases === 'true') {
+    // Este filtro necesitaría una consulta más compleja con joins
+    // Por ahora, haremos un filtro simple para verificar si tiene clubDestino
+    criteria.paseClub = { [Op.not]: null };
+    console.log('🔍 Filtrando afiliados que tienen pases');
+  }
+
+  if (query.clubOrigenId) {
+    // Esta consulta requeriría join con la tabla de pases
+    // Por ahora implementamos una lógica básica
+    console.log(`🔍 Filtro por club origen ID: ${query.clubOrigenId} (requiere implementación de joins)`);
+  }
+  
+  if (query.clubDestinoId) {
+    criteria.paseClub = query.clubDestinoId;
+    console.log(`🔍 Filtrando por club destino ID: ${query.clubDestinoId}`);
+  }
+
+  if (query.estadoPase) {
+    // Implementación básica del filtro por estado de pase
+    // Para una implementación completa, necesitaríamos unir con la tabla de pases
+    console.log(`🔍 Filtro por estado de pase: ${query.estadoPase} (requiere implementación de joins)`);
+  }
+
+  // Filtros de rango de fechas de nacimiento
   if (query.fechaNacimientoDesde || query.fechaNacimientoHasta) {
     criteria.fechaNacimiento = {};
     if (query.fechaNacimientoDesde) {
@@ -365,6 +430,31 @@ personaCtrl.getPersonaFiltro = async (req, res) => {
     }
   }
 
+  // Filtros por edad (calculando fechas basadas en la edad)
+  if (query.edadDesde || query.edadHasta) {
+    const hoy = new Date();
+    const añoActual = hoy.getFullYear();
+
+    if (!criteria.fechaNacimiento) {
+      criteria.fechaNacimiento = {};
+    }
+
+    if (query.edadHasta) {
+      // Para edad hasta 30, la fecha de nacimiento debe ser mayor o igual que (año actual - 30, mismo mes y día)
+      // Es decir, la persona nació hace 30 años o menos
+      const fechaHasta = new Date(añoActual - parseInt(query.edadHasta) - 1, hoy.getMonth(), hoy.getDate());
+      criteria.fechaNacimiento[Op.gte] = fechaHasta.toISOString().split('T')[0];
+    }
+
+    if (query.edadDesde) {
+      // Para edad desde 20, la fecha de nacimiento debe ser menor o igual que (año actual - 20, mismo mes y día)
+      // Es decir, la persona nació hace 20 años o más
+      const fechaDesde = new Date(añoActual - parseInt(query.edadDesde), hoy.getMonth(), hoy.getDate());
+      criteria.fechaNacimiento[Op.lte] = fechaDesde.toISOString().split('T')[0];
+    }
+  }
+
+  // Filtros de rango de fechas de licencia
   if (query.fechaLicenciaDesde || query.fechaLicenciaHasta) {
     criteria.fechaLicencia = {};
     if (query.fechaLicenciaDesde) {
@@ -374,17 +464,68 @@ personaCtrl.getPersonaFiltro = async (req, res) => {
       criteria.fechaLicencia[Op.lte] = query.fechaLicenciaHasta;
     }
   }
+  
+  // Filtro por estado de licencia
+  if (query.estadoLicencia) {
+    criteria.estadoLicencia = query.estadoLicencia;
+  }
+
+  // Filtro para credenciales
+  const includeOptions = [{
+    model: Club,
+    as: "club",
+    attributes: ["idClub", "nombre"],
+  }];
+
+  // Si hay filtro por credenciales, debemos unir con la tabla de credenciales
+  const tieneCredencial = query.tieneCredencial === 'true';
+  const estadoCredencial = query.estadoCredencial;
+  
+  if (tieneCredencial || estadoCredencial) {
+    try {
+      const { models } = require('../models');
+      const Credencial = models.Credencial; // Asumiendo que tienes un modelo Credencial definido
+      
+      // Si el modelo existe, agregarlo al include
+      if (Credencial) {
+        includeOptions.push({
+          model: Credencial,
+          as: "credenciales", // Ajustar según la relación definida en tus modelos
+          required: tieneCredencial, // INNER JOIN si tieneCredencial=true
+          where: estadoCredencial ? { estado: estadoCredencial } : undefined
+        });
+        
+        console.log('✅ Join con tabla de credenciales agregado', {
+          tieneCredencial,
+          estadoCredencial
+        });
+      } else {
+        console.warn('⚠️ No se encontró el modelo Credencial para el join');
+      }
+    } catch (error) {
+      console.error('❌ Error al intentar incluir join con credenciales:', error.message);
+      // Continuar sin el join en caso de error
+    }
+  }
+
+  console.log('Criterios de búsqueda finales:', JSON.stringify(criteria, null, 2));
 
   try {
+    // Opciones de ordenamiento
+    const orderOptions = [];
+    if (query.sortBy) {
+      const direction = (query.sortOrder && query.sortOrder.toUpperCase() === 'DESC') ? 'DESC' : 'ASC';
+      orderOptions.push([query.sortBy, direction]);
+    }
+
     const personas = await Persona.findAll({
       where: criteria,
-      include: {
-        // Incluye el club asociado si se filtra por club o simplemente quieres verlo
-        model: Club,
-        as: "club",
-        attributes: ["idClub", "nombre"],
-      },
+      include: includeOptions, // Usar el array de includes que puede tener credenciales
+      order: orderOptions.length > 0 ? orderOptions : undefined,
+      distinct: true // Para evitar duplicados cuando hay joins
     });
+    
+    console.log(`Encontrados ${personas.length} resultados con los filtros aplicados`);
     res.status(200).json(personas);
   } catch (error) {
     console.error("Error en getPersonaFiltro:", error);
