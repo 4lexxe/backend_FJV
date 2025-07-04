@@ -221,6 +221,10 @@ paseCtrl.createPase = async (req, res) => {
     // Crear el pase
     const pase = await Pase.create(paseData);
 
+    await persona.update({
+      clubActual: clubDestino.nombre
+    });
+
     // Obtener el pase completo con las relaciones
     const paseCompleto = await Pase.findByPk(pase.idPase, {
       include: [
