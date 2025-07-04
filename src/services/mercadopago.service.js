@@ -6,7 +6,7 @@ const { MercadoPagoConfig, Payment, Preference } = require('mercadopago');
 // Configuración de MercadoPago con credenciales de PRODUCCIÓN
 const mercadopago = new MercadoPagoConfig({
     // Usar exclusivamente el token de acceso de producción
-    accessToken: process.env.MP_ACCESS_TOKEN || 'APP_USR-299934034730589-061915-0a9fd8c761e63a4b2499660322a53129-1059717260',
+    accessToken: process.env.MP_ACCESS_TOKEN,
     options: {
         timeout: 10000,
         idempotencyKey: `prod_${Date.now()}` // Clave de idempotencia única para cada sesión

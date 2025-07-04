@@ -244,17 +244,17 @@ async function initializeAdminUser() {
 
     // Datos del administrador por defecto
     const adminUser = await Usuario.create({
-      nombre: "Admin",
-      apellido: "Sistema",
-      email: "alexalexe311@gmail.com",
-      password: "Admin123!",
+      nombre: process.env.ADMIN_NOMBRE,
+      apellido: process.env.ADMIN_APELLIDO,
+      email: process.env.ADMIN_EMAIL,
+      password: process.env.ADMIN_PASSWORD,
       rolId: adminRol.id,
       emailVerificado: true,
     });
 
     console.log("✅ Usuario administrador creado exitosamente:");
     console.log(`   - Email: ${adminUser.email}`);
-    console.log(`   - Contraseña: Admin123!`);
+    console.log(`   - Contraseña: ${process.env.ADMIN_PASSWORD || "Admin123!"}`);
     console.log(
       "⚠️  IMPORTANTE: Cambie la contraseña después del primer inicio de sesión"
     );

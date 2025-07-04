@@ -3,7 +3,7 @@ const FormData = require('form-data');
 
 // API Key de ImgBB - debería estar en variables de entorno
 // Agregamos una API key temporal para desarrollo
-const IMGBB_API_KEY = process.env.IMGBB_API_KEY || 'c5e30aa93ac5a5e9b34aa4d4f93b6e79'; // API key temporal
+const IMGBB_API_KEY = process.env.IMGBB_API_KEY; // API key temporal
 
 const imgbbService = {
     /**
