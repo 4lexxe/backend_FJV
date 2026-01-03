@@ -66,6 +66,19 @@ personaCtrl.createPersona = async (req, res) => {
       }
     }
 
+    // Validar fechas vacías o inválidas
+    if (!personaData.fechaLicencia || personaData.fechaLicencia === 'Invalid date' || personaData.fechaLicencia === '') {
+      personaData.fechaLicencia = null;
+    }
+    
+    if (!personaData.fechaLicenciaBaja || personaData.fechaLicenciaBaja === 'Invalid date' || personaData.fechaLicenciaBaja === '') {
+      personaData.fechaLicenciaBaja = null;
+    }
+
+    if (!personaData.fechaNacimiento || personaData.fechaNacimiento === 'Invalid date' || personaData.fechaNacimiento === '') {
+      personaData.fechaNacimiento = null;
+    }
+
     console.log('📋 Datos finales a crear:', personaData);
 
     // Crear persona con los datos procesados (incluida la foto ya procesada)

@@ -76,7 +76,12 @@ async function uploadToImgBB(fileBuffer, fileName) {
  * Obtener configuración de momentos destacados
  */
 const getMomentosDestacadosConfig = async (req, res) => {
+  console.log('➡️ [MomentosDestacados] Recibida petición GET /config');
   try {
+    console.log('🔍 [MomentosDestacados] Buscando configuración en BD...');
+    // Añadimos timeout para evitar bloqueos infinitos
+    const timeout = 5000; // 5 segundos
+    
     let config = await MomentosDestacadosConfig.findOne({
       where: { activo: true },
       include: [{
@@ -85,16 +90,22 @@ const getMomentosDestacadosConfig = async (req, res) => {
         where: { activo: true },
         required: false,
         order: [['orden', 'ASC']]
-      }]
+      }],
+      // Forzar timeout y logging
+      benchmark: true,
+      logging: console.log
     });
+    console.log('✅ [MomentosDestacados] Búsqueda finalizada. Config encontrada:', !!config);
 
     // Si no existe configuración, crear una por defecto
     if (!config) {
+      console.log('⚠️ [MomentosDestacados] No existe configuración, creando por defecto...');
       config = await MomentosDestacadosConfig.create({
         titulo: 'Momentos Destacados',
         subTitulo: 'Los mejores momentos del voleibol jujeño',
         activo: true
       });
+      console.log('✅ [MomentosDestacados] Configuración por defecto creada. ID:', config.idConfig);
 
       // Recargar con imágenes
       config = await MomentosDestacadosConfig.findByPk(config.idConfig, {
@@ -108,6 +119,7 @@ const getMomentosDestacadosConfig = async (req, res) => {
       });
     }
 
+    console.log('📤 [MomentosDestacados] Enviando respuesta al cliente...');
     res.status(200).json({
       status: '1',
       msg: 'Configuración de momentos destacados obtenida exitosamente',
@@ -115,7 +127,7 @@ const getMomentosDestacadosConfig = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error obteniendo configuración de momentos destacados:', error);
+    console.error('❌ [MomentosDestacados] Error en getMomentosDestacadosConfig:', error);
     res.status(500).json({
       status: '0',
       msg: 'Error interno del servidor',
