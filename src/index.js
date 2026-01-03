@@ -151,6 +151,7 @@ app.use((req, res, next) => {
 async function startServer() {
   try {
     // 1. Conectar a la base de datos
+    console.log("Iniciando conexión a la base de datos...");
     await connectDB();
     console.log("✔ Conexión a la base de datos establecida correctamente.");
 
